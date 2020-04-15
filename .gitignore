@@ -1,0 +1,7 @@
+## gistic2 .gitignore
+
+# subversion files
+*.svn
+
+# emacs backups
+*~
