@@ -24,19 +24,21 @@ smaller (600ish) data sets.
 - *corrperm_ampdel_tempering_module.m* - compiled "simulated tempering" module that can be run in multiprocessing environment
 - *corrperm_tempering_schedule.m* - runs a chunk of multiple iterations 
 
-- *corrperm_cooldown_ratio.m* - runs one iteration of simulated annealing with a temperature 
-ramp. This is the lowest level workhorse function
-- *corrperm_display_stats.m* - 
+- *corrperm_cooldown_ratio.m* - run one iteration of simulated annealing with a temperature 
+ramp. This is the lowest level workhorse function for both flavors of simulated tempering.
 - *corrperm_get_final_stats.m*
-- *corrperm_lsf_submission.m*
-- *corrperm_lsf_wrapper.sh*
 
-- *corrperm_prep.m*
-- *corrperm_prep_gg.m*
+#### adapters for different kinds of multiprocessing environments
+- *corrperm_lsf_submission.m* - submit a module to (Broad Institute) Platform LSF
+- *corrperm_lsf_wrapper.sh* - script to launch and pass parameters to compiled permutation module on one LSF CPU instance
+- *corrperm_uger_submission.m* - submit a module to (Broad Institute) Grid Engine
+- *corrperm_uger_wrapper.sh* - script to launch and pass parameters to compiled permutation module on one GridEngine CPU instance
+
+- *corrperm_prep.m* - prepare canonical data for permutations in a specified work directory from input copy number data in a D-struct and peaks
+- *corrperm_prep_gg.m* - variant of corrperm_prep() that processes considering the different background model for
+deletions used by gene_gistic. Much more time-consuming.
 - *create_D_sample_bins.m*
 
-- *corrperm_uger_submission.m*
-- *corrperm_uger_wrapper.sh*
 
 - *farm_perms_lsf2_for_lineage_hl.m* - vestigial (DELETE ME)
 
@@ -45,14 +47,15 @@ ramp. This is the lowest level workhorse function
 - *score_cooccurance.m* - 
 
 ###Analysis Functions
+#### top level functions
 - *corrperm_analyze_features.m* -
 - *corrperm_analyze_pairs.m* -
 - *corrperm_analyze_pairs2.m* -
 - *corrperm_analyze_pairs3.m* -
+#### helper functions
+- *save_feature_pvalues.m* -
+- *save_feature_pvalues_2tailed.m* -
+- *save_pair_pvalues.m*
+- *max_fish_power.m* - calculate the maximum possible power (best p-value) for given marginals  
 
-save_feature_pvalues.m
-save_feature_pvalues_2tailed.m
-save_pair_pvalues.m
-
-max_fish_power.m
-
+- *corrperm_display_stats.m* - displays the statistics gathered by the permutation.
