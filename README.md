@@ -1,11 +1,13 @@
 # cn_correlation
 
 ## History
-The "lockstep tempering" variant was invented to improve the effectiveness of the algorithm with a smaller (700ish), single-disease cohort for [Schumacher2017] (Schumacher et al., *PlosOne*, 2017). The original implementation was adapted to use the GridEngine MPE (Broad UGER) and use less memory (allowing more permutations) for a 11K patient sample analysis published in [Gong2016] (Gong et al., *Neoplasia*, 2017). The algorithm has adapted for studies of correlation of arm-level changes in low grade gliomas (TCGA et al., *NEJM*, 2015) and aneuploidy (Taylor et al., *Cancer Cell*, 2018).
+This algorithm was created by Travis Zack under the direction of Rameen Beroukhim. It was applied to a 5000 patient sampe pan-cancer cohort and published in [Zack213] (Zack et al., *Nat Gen*, 2013). Travis's working logs were adapted post-publication into a re-useable functional format by Steve Schumacher. The "lockstep tempering" variant was invented to improve the effectiveness of the algorithm with a smaller (700ish), single-disease cohort for [Schumacher2017] (Schumacher et al., *PlosOne*, 2017). The original implementation was adapted to use the GridEngine MPE (Broad UGER) and use less memory (allowing more permutations) for a 11K patient sample analysis published in [Gong2016] (Gong et al., *Neoplasia*, 2017). The algorithm has adapted for studies of correlation of arm-level changes in low grade gliomas (TCGA et al., *NEJM*, 2015) and aneuploidy (Taylor et al., *Cancer Cell*, 2018).
 
+This code was originally maintained in the Broad Institute "CancerGenomeAnalysis" Subversion 1.6 repository under the path
+https://svnrepos/CancerGenomeAnalysis/trunk/matlab/snp/correlation. It generally depends on some of the code under https://svnrepos/CancerGenomeAnalysis/trunk/matlab/
 
 ## Overview
-
+-This method creates a background model for accessing the significance of observed co-occurring (or mutually excluding) copy number events by creating a large number of permutations from the observed data. 
 
 ## canonical reference files
 - *Binary_amps.mat*
