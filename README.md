@@ -1,7 +1,6 @@
 # cn_correlation
 
 ## History
-The original "simulated tempering" analysis was developed by Travis Zack for the 5K patient sample pan-cancer copy number data published in [Zack2013] (Zack et al., *Nat Gen* 2013). A variant of this analysis looking specifically at the *PARK2* gene was published as part of [Gong2013] (Gong et al, Nat Gen, 2013).  The original was implemented as a series of MATALAB scripts and helper functions using the Platform LSF multiprocessing system. Steve Schumacher restructured the original code into a more functional form.
 The "lockstep tempering" variant was invented to improve the effectiveness of the algorithm with a smaller (700ish), single-disease cohort for [Schumacher2017] (Schumacher et al., *PlosOne*, 2017). The original implementation was adapted to use the GridEngine MPE (Broad UGER) and use less memory (allowing more permutations) for a 11K patient sample analysis published in [Gong2016] (Gong et al., *Neoplasia*, 2017). The algorithm has adapted for studies of correlation of arm-level changes in low grade gliomas (TCGA et al., *NEJM*, 2015) and aneuploidy (Taylor et al., *Cancer Cell*, 2018).
 
 
