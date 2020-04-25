@@ -9,6 +9,33 @@ https://svnrepos/CancerGenomeAnalysis/trunk/matlab/snp/correlation. It generally
 ## Overview
 -This method creates a background model for accessing the significance of observed co-occurring (or mutually excluding) copy number events by creating a large number of permutations from the observed data. 
 
+## Workflow
+- prepare data and measure amplification/deletion disruption for every patient sample's chromosome
+- run a few tuning cycles
+- run permutations in multi-processing environment
+- analyze the permutations
+
+### Core Algorithm
+
+## data representation
+|disruption|sample1|sample2|...|sampleN|
+|---|---|---|---|---|
+|**chr1**| a<sub>11</sub> / d<sub>11</sub> | a<sub>12</sub> / d<sub>12</sub> |...| a<sub>1N</sub> / d<sub>1N</sub> |
+|**chr2**| a<sub>21</sub> / d<sub>21</sub> | a<sub>22</sub> / d<sub>22</sub> |...| a<sub>2N</sub> / d<sub>2N</sub> |
+|**...**|...|...|...|...|
+|**chrX**| a<sub>X1</sub> / d<sub>X1</sub> | a<sub>X2</sub> / d<sub>X2</sub> |...| a<sub>XN</sub> / d<sub>XN</sub> |
+|**genome**| A<sub>1</sub> / D<sub>1</sub> | A<sub>2</sub> / D<sub>2</sub> |...|A<sub>N</sub> / D<sub>N</sub> |
+
+## permutation operations
+- initial randomization
+- objective function
+- swap procedure
+
+## implementation notes
+- temperature units
+- chunking
+- subiterations
+
 ## canonical reference files
 - *Binary_amps.mat*
 - *Binary_dels.mat*
