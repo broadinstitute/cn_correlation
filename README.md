@@ -36,15 +36,28 @@ https://svnrepos/CancerGenomeAnalysis/trunk/matlab/snp/correlation. It generally
 - chunking
 - subiterations
 
-## canonical reference files
-- *Binary_amps.mat*
-- *Binary_dels.mat*
-- *new_samples.mat*
-- *D.mat*
-- *peak_regs.mat*
+## canonical reference files output by corrperm_prep
 
+### Analysis inputs
 
+- *Binary_amps.mat* - sample x event logical matrix of amplification events
+- *Binary_dels.mat* - sample x event logical matrix of deletion events
+- *D.mat* - loaded, but not currently used
+- *peak_regs.mat* - peak (event) definitions
+- *new_samples.mat* - class (lineage) definition
 
+### MPE permutation inputs
+These are the identical inputs for each job.
+- *margs.mat* - 3D array *margs_sort* of disruption values Nchr X Nsamples X 2 (amp/del) 
+- *permute_options.mat* - contains a struct named *opts*
+- *new_samples.mat* - class definition for the samples, cell array *new_samples* of index vectors
+
+### MPE module per-chunk output files
+Each MPE job outputs its chunk as four native matlab files.
+- *rand_margs.{chunk}.mat* - randomized disruption matrices, currently not used by analysis
+- *idx_cell.{chunk}.mat* - indices mapping original samples to permuted for each chromosome
+- *stat_finals.{chunk}.mat* - final error for each run
+- *stats.{chunk}.mat* - statistics for each run
 
 ## Code File Descriptions
 -README.txt - old documentation, more thinking out how to functionally decompose Travis's scripts, less useful for final code.
