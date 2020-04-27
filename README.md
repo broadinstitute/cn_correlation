@@ -9,15 +9,55 @@ https://svnrepos/CancerGenomeAnalysis/trunk/matlab/snp/correlation. It generally
 ## Overview
 -This method creates a background model for accessing the significance of observed co-occurring (or mutually excluding) copy number events by creating a large number of permutations from the observed data. 
 
-## canonical reference files
-- *Binary_amps.mat*
-- *Binary_dels.mat*
-- *new_samples.mat*
-- *D.mat*
-- *peak_regs.mat*
+## Workflow
+- prepare data and measure amplification/deletion disruption for every patient sample's chromosome
+- run a few tuning cycles
+- run permutations in multi-processing environment
+- analyze the permutations
 
+### Core Algorithm
 
+## data representation
+|disruption|sample1|sample2|...|sampleN|
+|---|---|---|---|---|
+|**chr1**| a<sub>11</sub> / d<sub>11</sub> | a<sub>12</sub> / d<sub>12</sub> |...| a<sub>1N</sub> / d<sub>1N</sub> |
+|**chr2**| a<sub>21</sub> / d<sub>21</sub> | a<sub>22</sub> / d<sub>22</sub> |...| a<sub>2N</sub> / d<sub>2N</sub> |
+|**...**|...|...|...|...|
+|**chrX**| a<sub>X1</sub> / d<sub>X1</sub> | a<sub>X2</sub> / d<sub>X2</sub> |...| a<sub>XN</sub> / d<sub>XN</sub> |
+|**genome**| A<sub>1</sub> / D<sub>1</sub> | A<sub>2</sub> / D<sub>2</sub> |...|A<sub>N</sub> / D<sub>N</sub> |
 
+## permutation operations
+- initial randomization
+- objective function
+- swap procedure
+
+## implementation notes
+- temperature units
+- chunking
+- subiterations
+
+## canonical reference files output by corrperm_prep
+
+### Analysis inputs
+
+- *Binary_amps.mat* - sample x event logical matrix of amplification events
+- *Binary_dels.mat* - sample x event logical matrix of deletion events
+- *D.mat* - loaded, but not currently used
+- *peak_regs.mat* - peak (event) definitions
+- *new_samples.mat* - class (lineage) definition
+
+### MPE permutation inputs
+These are the identical inputs for each job.
+- *margs.mat* - 3D array *margs_sort* of disruption values Nchr X Nsamples X 2 (amp/del) 
+- *permute_options.mat* - contains a struct named *opts*
+- *new_samples.mat* - class definition for the samples, cell array *new_samples* of index vectors
+
+### MPE module per-chunk output files
+Each MPE job outputs its chunk as four native matlab files.
+- *rand_margs.{chunk}.mat* - randomized disruption matrices, currently not used by analysis
+- *idx_cell.{chunk}.mat* - indices mapping original samples to permuted for each chromosome
+- *stat_finals.{chunk}.mat* - final error for each run
+- *stats.{chunk}.mat* - statistics for each run
 
 ## Code File Descriptions
 -README.txt - old documentation, more thinking out how to functionally decompose Travis's scripts, less useful for final code.
