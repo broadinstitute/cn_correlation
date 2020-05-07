@@ -1,5 +1,6 @@
 function corrperm_analyze_pairs3(ref_dir,perm_dir,save_dir,options)
-% memory-conserving version of corrperm_analyze_pairs
+% memory-conserving version of corrperm_analyze_pairs that accumulates a full histogram of
+% permuted event counts for each pair of events
 
 % originally adapted from /xchip/gistic/Travis/Correlations/LSF2/0816/concat_mem_saver_and_p.m
 
@@ -79,16 +80,16 @@ obs_tot = Binary*Binary';
 % (in this version, we calculate these for each chunk as we pass over the files)
 
 % calculate maximum possible co-occurrence for histogram
-event_counts = sort(sum(Binary,2));
+maxcount = max(sum(Binary,2));
 % use this as the size for the event histogram (may be overkill!!!)
-cochist = zeros(Nevents,Nevents,event_counts(2));
+cochist = zeros(Nevents,Nevents,maxcount+1);
 
 if do_by_lineage
     cochist_byclass = cell(Nlineages,1);
     for i = 1:Nlineages
-        event_counts = sort(sum(Binary(:,samples{i}),2));
+        maxcount = max(sum(Binary(:,samples{i}),2));
         % use this as the size for the event histogram (may be overkill!!!)
-        cochist_byclass{i} = zeros(Nevents,Nevents,event_counts(2));
+        cochist_byclass{i} = zeros(Nevents,Nevents,maxcount+1);
     end
 end
 
@@ -311,7 +312,7 @@ verbose('saving results',10)
 
 % save binaries for forensics
 save([save_dir 'pair_results',ext,'.mat'],'regs_idx','p_corr','p_anti','p_cpow','p_apow');
-%!save([save_dir 'pair_perm_tot',ext,'.mat'],'perm_tot');
+save([save_dir 'cochist',ext,'.mat'],'cochist');
 save([save_dir 'pair_obs_tot',ext,'.mat'],'obs_tot');
 
 % save text results files
@@ -320,17 +321,29 @@ save_pair_pvalues(regs,[p_anti,regs_idx,p_apow],[save_dir,'anticorr_pair',ext,'.
 save_pair_pvalues(regs,[p_corr,regs_idx,p_cpow],[save_dir,'correlate_pair',ext,'.txt'],...
                 1,options.sig_thresh,options.power_thresh);
 
-%% subfunction for creating histogram
+%% subfunction for updating histogram
 
 function cochist = count_binsum(cochist,cocounts)
 % cochist is histogram of counts across permutations (Nevents x Nevents x max_counts)
 % cocounts are the coocurrences for a single iteration (Nevents x Nevents)
 
-% if count excededs size of histogram, reallocate
+% if count excededs size of histogram, reallocate (shouldn't happen, but does historically)
 if max(max(cocounts)) >= size(cochist,3)
-    fprintf('*'); %!!! debug!!!
+    fprintf('\nhisto size count exceeded!\n'); %!!! debug!!!
     cochist(1,1,max(max(cocounts))+1) = 0;
 end
+
+% bump histogram based on co-occurences
+Nevents = size(cocounts,1);
+for i = 1:Nevents-1
+    for j = i+1:Nevents
+        c = cocounts(i,j);
+        cochist(i,j,c+1) = cochist(i,j,c+1)+1;
+    end
+end
+% old code fails to count co-occurrence == 0
+%{
 % convert to indices and values
 [i,j,v] = find(cocounts);
 cochist = cochist + accumarray([i,j,v+1],1,size(cochist));
+%}

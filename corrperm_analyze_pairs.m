@@ -1,19 +1,25 @@
 function corrperm_analyze_pairs(ref_dir,perm_dir,save_dir,options)
 
-
 % adapted from /xchip/gistic/Travis/Correlations/LSF2/0816/cancat_mem_saver_and_p.m
 
 %% process optional arguments
 if ~exist('options','var')
     options = struct;
 end
-
+% optional argument defaults
 options = impose_default_value(options,'ext','');           % extension label for output files
 options = impose_default_value(options,'sig_thresh',0.25);  % cutoff for q-value
 options = impose_default_value(options,'power_thresh',0.1); % cutoff for minimum possible p-value 
 options = impose_default_value(options,'split_eq',false);    % set to split obs==permuted between tail and body 
 options = impose_default_value(options,'pcount',1);          % set to split obs==permuted between tail and body 
-options = impose_default_value(options,'perm_file_mask','idx_cell*');% set to split obs==permuted between tail and body 
+options = impose_default_value(options,'perm_file_mask','idx_cell*'); % for finding permutation chunk files
+% input warnings
+if options.split_eq
+     warning('The ''split_eq'' way of calculating P-values is deprecated.');
+end
+if options.pcount == 0
+    warning('A pseudocount of 0 is deprecated.');
+end
 
 % fix output extension
 ext = options.ext;
@@ -61,7 +67,7 @@ verbose('Reading %d permutation chunks from ''%s''',10,length(files),perm_dir);
 % loop over permutation results files
 for k = 1:length(files)
     verbose(files(k).name,10);
-    load([perm_dir,files(k).name]);  % 'idx_cell', each element NCHR x Nsamples x amp/del
+    load([perm_dir,files(k).name]);  % 'idx_cell', each element NCHR x Nsamples
     npf = length(idx_cell);
     % create storage for permutation results across files
     if ~exist('Binary1','var')
@@ -156,9 +162,9 @@ for i = 1:length(chrns)
     Npairs = Npairs + sum(chrns(i) < chrns);
 end
 
-pscnt = options.pcount;
+pscnt = options.pcount; % pseudocount
 
-%{
+%----{
 % allocate storage for lineage-specific p-values
 verbose('calculating p-values for lineage specific co-occurrences',10);
 tic
@@ -172,20 +178,22 @@ for l = 1:Nlineages
    for i = 1:Nevents
         for j = i+1:Nevents
             if chrns(i)~=chrns(j)
-                %% maximum power calculation
-                [p_list_cpow(s),p_list_apow(s)] = max_fish_power(length(samples{l}),...
-                                    sum(Binary(i,samples{l})),sum(Binary(j,samples{l})));
+                % maximum power calculation
+                [p_list_cpow(s),p_list_apow(s)] = max_fish_power(length(samples{l}), sum(Binary(i,samples{l})),sum(Binary(j,samples{l})));
                 pair_perm = squeeze(lin_couns{l}(i,j,:)); %! old store method
                 pair_obs = lin_obs{l}(i,j);
-                % two ways of dealing with permuted==observed
+                
+                % calculate p-values for both correlation and anti-correlation
                 if options.split_eq
-                    p_list_corr(s,l) = (ge_counts_byclass(i,j,l) - eq_counts_byclass(i,j,l)/2 + pscnt) / (Nperms + pscnt); 
-                    p_list_anti(s,l) = (le_counts_byclass(i,j,l) - eq_counts_byclass(i,j,l)/2 + pscnt) / (Nperms + pscnt);
+                    % historical
+                    p_list_corr(s,l) = (sum(pair_perm>pair_obs) + sum(pair_perm==pair_obs)/2 + pscnt) / (Nperms+pscnt);
+                    p_list_anti(s,l) = (sum(pair_perm<pair_obs) + sum(pair_perm==pair_obs)/2) / (Nperms+pscnt);
                 else
-                    p_list_corr(s,l) = (ge_counts_byclass(i,j,l) + pscnt) / (Nperms + pscnt);
-                    p_list_anti(s,l) = (le_counts_byclass(i,j,l) + pscnt) / (Nperms + pscnt);
-                    % (added +1 pseudocount 2016-01-20)
+                    % the right way of dealing with permuted==observed
+                    p_list_corr(s,l) = sum((pair_perm>=pair_obs) + pscnt) / (Nperms+pscnt);
+                    p_list_anti(s,l) = sum((pair_perm<=pair_obs) + pscnt) / (Nperms+pscnt);
                 end
+                % track event indices for this p-value
                 regs_idx(s,:) = [i,j];
                 s = s+1;
             end
@@ -233,12 +241,12 @@ for i = 1:Nevents-1
             [p_cpow(s),p_apow(s)] = max_fish_power(Nsamples,sum(Binary(i,:)),sum(Binary(j,:)));
             %% p value calculation
             if options.split_eq
-                p_corr(s) = (ge_counts(i,j) - eq_counts(i,j)/2 + pscnt) / (Nperms + pscnt);
-                p_anti(s) = (le_counts(i,j) - eq_counts(i,j)/2 + pscnt) / (Nperms + pscnt); 
+                eq_count = sum( squeeze(perm_tot(i,j,:)) == obs_tot(i,j) );
+                p_corr(s) = (sum( squeeze(perm_tot(i,j,:)) > obs_tot(i,j) ) + eq_count/2 + pscnt) / (Nperms + pscnt);
+                p_anti(s) = (sum( squeeze(perm_tot(i,j,:)) < obs_tot(i,j) ) + eq_count/2 + pscnt) / (Nperms + pscnt);
             else
-                p_corr(s) = (ge_counts(i,j) + pscnt) / (Nperms + pscnt);
-                p_anti(s) = (le_counts(i,j) + pscnt) / (Nperms + pscnt);
-                p_equal(s) = sum(squeeze(perm_tot(i,j,:)==obs_tot(i,j))) / (Nperms + pscnt); %!!! test
+                p_corr(s) = (sum(squeeze(perm_tot(i,j,:)) >= obs_tot(i,j) ) + pscnt) / (Nperms + pscnt);
+                p_anti(s) = (sum(squeeze(perm_tot(i,j,:)) <= obs_tot(i,j) ) + pscnt) / (Nperms + pscnt);
             end
             regs_idx(s,:) = [i,j];
             s = s+1;
@@ -261,3 +269,4 @@ save_pair_pvalues(regs,[p_anti,regs_idx,p_apow],[save_dir,'anticorr_pair',ext,'.
 save_pair_pvalues(regs,[p_corr,regs_idx,p_cpow],[save_dir,'correlate_pair',ext,'.txt'],...
                 1,options.sig_thresh,options.power_thresh);
 
+save('/xchip/beroukhimlab/gistic/corrperm/debug_cpap1.mat')

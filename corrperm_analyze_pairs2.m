@@ -1,22 +1,24 @@
 function corrperm_analyze_pairs2(ref_dir,perm_dir,save_dir,options)
 % memory-conserving version of corrperm_analyze_pairs
 
-% adapted from /xchip/gistic/Travis/Correlations/LSF2/0816/cancat_mem_saver_and_p.m
-
 %% process optional arguments
 if ~exist('options','var')
     options = struct;
 end
+% optional argument defaults
 options = impose_default_value(options,'ext','');           % extension label for output files
 options = impose_default_value(options,'sig_thresh',0.25);  % cutoff for q-value
 options = impose_default_value(options,'power_thresh',0.1); % cutoff for minimum possible p-value 
 options = impose_default_value(options,'split_eq',false);   % set to split observed===permuted between tail and body 
 options = impose_default_value(options,'pcount',1);         % pseudo count (1 or 0) 
-options = impose_default_value(options,'perm_file_mask','idx_cell*');% set to split obs==permuted between tail and body 
+options = impose_default_value(options,'perm_file_mask','idx_cell*');
 
+% input warnings
 if options.split_eq
      warning('The ''split_eq'' way of calculating P-values is deprecated.');
-     options.split_eq = false;
+end
+if options.pcount == 0
+    warning('A pseudocount of 0 is deprecated.');
 end
 
 % fix output extension
@@ -67,7 +69,6 @@ end
 % overall
 obs_tot = sum(lin_obs,3);
 
-
 %% storage for statisitics
 % (in this version, we calculate these as we pass over the files)
 
@@ -95,7 +96,7 @@ for k = 1:length(files)
     load([perm_dir,files(k).name]);  % 'idx_cell' cell array, each element NCHR x Nsamples
     npf = length(idx_cell);
 
-    % get number of chromosomes from first chunck of permutations
+    % get number of chromosomes from first chunk of permutations
     if ~exist('NCHR','var')
         NCHR = size(idx_cell{1},1);
         % initialize chromosome-structure storage
@@ -171,14 +172,15 @@ for l = 1:Nlineages
             if chrns(i)~=chrns(j)
                 % maximum power calculation
                 [p_list_cpow(s),p_list_apow(s)] = max_fish_power(length(samples{l}), sum(Binary(i,samples{l})), sum(Binary(j,samples{l}))); 
-                % two ways of dealing with permuted==observed
+                % calculate p-values for both correlation and anti-correlation
                 if options.split_eq
+                    % historical
                     p_list_corr(s,l) = (ge_counts_byclass(i,j,l) - eq_counts_byclass(i,j,l)/2 + pscnt) / (Nperms + pscnt); 
                     p_list_anti(s,l) = (le_counts_byclass(i,j,l) - eq_counts_byclass(i,j,l)/2 + pscnt) / (Nperms + pscnt);
                 else
+                    % the correct way of dealing with permuted==observed
                     p_list_corr(s,l) = (ge_counts_byclass(i,j,l) + pscnt) / (Nperms + pscnt);
                     p_list_anti(s,l) = (le_counts_byclass(i,j,l) + pscnt) / (Nperms + pscnt);
-                    % (added +1 pseudocount 2016-01-20)
                 end
                 regs_idx(s,:) = [i,j];
                 s = s+1;
@@ -212,9 +214,9 @@ s = 1; % pair index
 for i = 1:Nevents-1
     for j = i+1:Nevents
         if chrns(i)~=chrns(j)
-            %% maximum power calculation
+            % maximum power calculation
             [p_cpow(s),p_apow(s)] = max_fish_power(Nsamples,sum(Binary(i,:)),sum(Binary(j,:)));
-            %% p value calculations
+            % p value calculations
             if options.split_eq
                 p_corr(s) = (ge_counts(i,j) - eq_counts(i,j)/2 + pscnt) / (Nperms + pscnt);
                 p_anti(s) = (le_counts(i,j) - eq_counts(i,j)/2 + pscnt) / (Nperms + pscnt); 
@@ -243,4 +245,5 @@ save_pair_pvalues(regs,[p_anti,regs_idx,p_apow],[save_dir,'anticorr_pair',ext,'.
                 1,options.sig_thresh,options.power_thresh);
 save_pair_pvalues(regs,[p_corr,regs_idx,p_cpow],[save_dir,'correlate_pair',ext,'.txt'],...
                 1,options.sig_thresh,options.power_thresh);
+
 
