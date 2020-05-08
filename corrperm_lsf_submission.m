@@ -1,15 +1,39 @@
 function corrperm_lsf_submission(permuter,ref_dir,perm_dir,Njobs,Niters,opts)
-%!!! what will be function inputs
-%!ref_dir = '/xchip/gistic/schum/mcmc_correlation_test_130930/work_dir/';
-%!perm_dir = '/xchip/gistic/schum/mcmc_correlation_test_130930/output_dir/';
-%!permuter = 'corrperm_ampdel_tempering_module';
-%!Njobs = 10; % number of jobs to run
-%!Niters = 20; % number of iterations
+%LSF_SUBMISSION submit permutation test to Platform Load Sharing Facility
+%
+% lsf_submission(permuter,refdir,permdir,Njobs,Niters,options)
+%
+% PERMUTER name of the matlab function that executes a chunk of permutations
+% REFDIR file path to directory containing inputs
+% PERMDIR file path to directory where output chunk files will be stored
+% NJOBS is the number of chunks (schedulings of the permuter)
+% NITERS is the number of permutations to perform per chunk
+% OPTS is a struct containing PERMUTER-dependent tuning parameters
+%
+% The inputs that need to be stored in REFDIR are:
+%   - margs.mat - array of marginal disruption constraints for permutations
+%   - new_samples.mat - the class definition for each sample
+%
+% The OPTS struct is stored as 'permute_options.mat' in the REFDIR prior to
+% submission, along with a 'launch_perms' shell script.
+ 
+% need input directory
+if ~exist(ref_dir,'dir')
+    error('input (reference) directory doen''t exist!')
+end
+
+% make output directory if need be
+if ~exist(perm_dir,'dir')
+    mkdir(perm_dir);
+end
+
+% save annealing parameters in opts, plus other stuff for ease of resubmission
+save(fullfile(ref_dir,'permute_options.mat'),'opts','permuter','perm_dir','Njobs','Niters');
 
 % wrapper script !!!TODO existence test
 wrapscript = which('corrperm_lsf_wrapper.sh');
 
-srcpath = which(permuter);
+srcpath = which(permuter); % path to source matlab function
 if isempty(srcpath)
     throw(MException('matlab:submit_perm_jobs:no_src',...
                      'cannot find source file ''%s''.',permuter));
@@ -40,19 +64,19 @@ cmd_template = ['bsub ',...
           '-W 240 ',...
           '-P cancerfolk ',...
           '-o ',perm_dir,'%s.out.txt -e ',perm_dir,'%s.err.txt ',...
-          '-r ',wrapscript,' ',executable,' ',ref_dir,' ',perm_dir ' %s %d']; 
+          '-r ',wrapscript,' ',executable,' ',ref_dir,' ',perm_dir ' %s %d\n']; 
       
-      
-% need input directory
-if ~exist(ref_dir,'dir')
-    error('input directory doen''t exist!')
+launch_script = [ref_dir,'launch_perms.sh'];
+verbose('creating launch script ''%s''.',20,launch_script);
+fid = fopen(launch_script,'w');
+for j=1:Njobs
+    runid = sprintf('cycle%03d',j);
+    fprintf(fid,cmd_template,runid,runid,runid,Niters);
 end
-save(fullfile(ref_dir,'permute_options.mat'),'opts');
-% make output directory if need be
-if ~exist(perm_dir,'dir')
-    mkdir(perm_dir);
-end
-% submit to the farm
+fclose(fid);
+unix(['chmod u+x ',launch_script]);
+
+% bsub chunk tasks to LSF
 for j=1:Njobs
     runid = sprintf('cycle%03d',j);
     unix_str = sprintf(cmd_template,runid,runid,runid,Niters);
@@ -60,3 +84,4 @@ for j=1:Njobs
     [r1,r2]=unix(unix_str); 
     disp([strtrim(r2) ' Exit code: ' num2str(r1)])
 end
+
