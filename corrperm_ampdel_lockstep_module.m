@@ -1,12 +1,12 @@
-function corrperm_ampdel_tempering_module(ref_dir,perm_dir,cycle_number,iters)
+function corrperm_ampdel_lockstep_module(ref_dir,perm_dir,cycle_number,iters)
 %ANNEALING_PERMUTATIONS_MODULE - module wrapper for ANNEALING_PERMUTATIONS
 %
-%   annealing_permutations_module(INPUT_DIR,OUTPUT_DIR,CYCLE_NUMBER,ITERS)
+%   annealing_permutations_module(INPUT_DIR,OUTPUT_DIR,CHUNK_NUMBER,ITERS)
 %
-%   All inputs are strings for command line usage. INPUT_DIR is the path
-% to the directory with input files; OUTPUT_DIR is the path to the
-% directory with output files; CYCLE_NUMBER is an extension to identify; ITERS
-% is the number of iterations to do per-file.
+% All inputs are strings for command line usage. INPUT_DIR is the path
+% to the directory with input files; PERM_DIR is the path to the
+% directory where permated output files are written; CHUNK_NUMBER is 
+% an extension to identify; ITERS is the number of iterations to do per-chunk.
 
 %randomize the column #5, the sample column
 
@@ -33,7 +33,7 @@ set_verbose_level(40); %!!! put in opts
 
 % save output to files
 fprintf('saving output files\n')
-save([perm_dir 'rand_margs.' cycle_number '.mat'],'rand_margs_cell')
+%!save([perm_dir 'rand_margs.' cycle_number '.mat'],'rand_margs_cell')
 save([perm_dir 'idx_cell.' cycle_number '.mat'],'idx_cell')
 save([perm_dir 'stat_finals.' cycle_number '.mat'],'stat_finals')
 fprintf('annealing_permutations module complete\n')
