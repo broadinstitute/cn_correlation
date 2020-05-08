@@ -1,4 +1,4 @@
-function [D,Binary,Binary_amps,Binary_dels,new_samples,regs] = grab_permutation_inputs(input_folder)
+function [D,Binary,Binary_amps,Binary_dels,new_samples,regs] = load_permutation_ref_inputs(input_folder)
 
 load([input_folder,'Binary_amps.mat']);
 load([input_folder,'Binary_dels.mat']);

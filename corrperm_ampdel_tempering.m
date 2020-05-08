@@ -7,7 +7,7 @@ function [rand_margs_cell,idx_cell,stat_finals,stats] = corrperm_ampdel_temperin
 % MARGS are the observed marginals for each chromosome of each sample for
 % every SCNA type (Nchr X Nsamples X amp|del). IDX_MAT is a set of input
 % permutation indices.
-
+%
 % returns three cell arrays with an element for each permutation:
 % RAND_MARGS_CELL are the permutation marginals (each element disruption sum, 
 % Nchr X Nsamples X amp|del); IDX_CELL are the permutaion indices (integers, 
@@ -41,10 +41,9 @@ end
 
 % randomize random number generator for this chunk
 if str2num(regexprep(version,'\.[0-9]+\.[0-9]+ \(R.+\)$','')) >= 8.0
-    rng('shuffle') % Matlab R2012b
+    rng('shuffle') % Matlab R2012b and later
 else
     rand('seed',rem(now*10e9,1e6));disp(randperm(10)); %! Matlab R2010b: no 'rng', seed rng from wall clock
-%!    rand('seed',now); %!!! does not effectively randomize the seed
 end
 %min_bin = 100.*ones(23,2);%min_bin;
 
@@ -58,13 +57,11 @@ idx_mat0 = repmat(1:Nsamples,Nchr,1);
 idx_mat1 = repmat(1:Nsamples,Nchr,1);
 
 %% iterate over specified number of permutations
-%matlabpool open 4
-%parfor d = 1:iters
 tic
 for d = 1:iters
     % randomly permute sample labels within permutation classes
     for k = 1:length(samples)   % loop over permutation classses
-        for j = 1:Nchr              % loop over chromosomes  !!!HUMGEN
+        for j = 1:Nchr              % loop over chromosomes
             r = randperm(length(samples{k}));
             margs1(j,samples{k},:) = margs(j,samples{k}(r),:);
             idx_mat1(j,samples{k}) = idx_mat0(j,samples{k}(r));
@@ -95,7 +92,5 @@ end % permutation iteration
 total_time = toc;
 verbose('%d permutations in %0.1f seconds: %0.1f permutations/hour\n',10,...
                         iters,total_time,iters*3600/total_time);
-%matlabpool close
 verbose('- exiting permutation run -',10);
-
-
+end

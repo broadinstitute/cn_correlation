@@ -1,8 +1,8 @@
-function [rand_margs_cell,idx_cell,stat_finals,stats] = corrperm_ampdel_tempering(margs,samples,iters,opts)
-%CORRPERM_AMPDEL_TEMPERING iterate over rounds of simulated tempered annealing
+function [rand_margs_cell,idx_cell,stat_finals,stats] = corrperm_ampdel_lockstep(margs,samples,iters,opts)
+%CORRPERM_AMPDEL_LOCKSTEP iterate over rounds of simulated tempered annealing
 %
 %   [RAND_MARGS_CELL,IDX_CELL,STATS] = 
-%            corrperm_ampdel_tempering(MARGS,IDX_MAT,SAMPLES,ITERS,OPTS)
+%            corrperm_ampdel_lockstep(MARGS,IDX_MAT,SAMPLES,ITERS,OPTS)
 %
 % MARGS are the observed marginals for each chromosome of each sample for
 % every SCNA type (Nchr X Nsamples X amp|del). IDX_MAT is a set of input
@@ -13,10 +13,6 @@ function [rand_margs_cell,idx_cell,stat_finals,stats] = corrperm_ampdel_temperin
 % Nchr X Nsamples X amp|del); IDX_CELL are the permutaion indices (integers, 
 % Nchr X Nsamples); STATS are statistics (loosely defined).
 
-
-% derived from:
-% /xchip/gistic/Travis/Correlations/LSF2/0816/annealing_permutations_lsf2
-% /xchip/gistic/Travis/Correlations/LSF2/0816/annealing_permutations_lsf2_hl
 
 % optional parameter processing
 if ~exist('opts','var') || isempty(opts)
@@ -94,4 +90,7 @@ verbose('%d permutations in %0.1f seconds: %0.1f permutations/hour\n',10,...
 %matlabpool close
 verbose('- exiting permutation run -',10);
 
+
+
+end
 

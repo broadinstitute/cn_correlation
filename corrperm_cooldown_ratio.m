@@ -23,8 +23,8 @@ function [rand_margs,idx_mat,stat_final,data] = corrperm_cooldown_ratio(...
 % return:
 %   RAND_MARGS new permuted marginals
 %   IDX_MAT new permuted index
-%   STAT_FINAL is an amp/del vector of the final square differences between
-%       observed and annealed data
+%   STAT_FINAL is an amp/del vector of the final absolute value of the error
+%       between observed and annealed data
 %   DATA is a struct containing useful information about the run sampled at
 %       times determined by the OPTS.stat_interval parameter:
 %       
@@ -41,14 +41,8 @@ end
 opts = impose_default_value(opts,'stat_interval',1000); % interval for recording statistics
 opts = impose_default_value(opts,'class_subiters',100); % number of iterations in same class
 
-% G - number of temperature steps
-% TEMP - a vector of two temperatures (amp/del)
-% STEP - temperature ratio for adjusting temperature
-% SAMPLES - definition of permutation classes (also an output, but does not change)
-% MIN_BIN - array of minimum non-zero disruption value across all samples
-% SAMPLE_STAT - interval for sampling statistics, in temperature steps
+Temp_resets = 1; %!!! updated but unused, DELETE ME
 
-Temp_resets = 1;
 % sum chromosomes into marg (samples X amp/del)
 marg = squeeze(sum(margs));             % observed
 rand_marg = squeeze(sum(rand_margs));   % permuted
@@ -83,22 +77,22 @@ cellsz = cell2mat(cellsz);
 
 %% iterate over temperature steps 
 for l = 1:g
-    % pre-select (for efficiency) 100 chromosomes and sample pairs from
-    % the same permutation class to propose swaps of
-    samps = randsample(length(samples),1,true,cellsz);
-    n = length(samples{samps});
+    % pre-select (for efficiency) opts.class_subiters sample pairs from the same chromosome
+    % and the same permutation class (lineage) as proposed swaps
+    samps = randsample(length(samples),1,true,cellsz); % randomlypick a class
+    n = length(samples{samps}); % number of samples in class
     ss = samples{samps}(randi(n,1,opts.class_subiters));
     tt = samples{samps}(randi(n,1,opts.class_subiters));
     cc = randi(Nchr,1,opts.class_subiters);
     
-    % 100 sub-iterations at same (temperature,permutation class)
+    % opts.class_subiters at same (temperature,permutation class)
     for j = 1:opts.class_subiters
         % index preselected pair/chromosome
         s = ss(j);
         t = tt(j);
         c = cc(j);
         
-        %% evaluate effect of swap for amplifications
+        %% evaluate effect of swap for amplifications (w/o actually swapping)
         E_amp = 0;
         delta_amp = rand_margs(c,s,1)-rand_margs(c,t,1);
         if delta_amp ~=0
@@ -113,8 +107,8 @@ for l = 1:g
                 old_at_value = margerr_at ./ denorm_at;
                 new_at_value = (margerr_at+delta_amp) ./ denorm_at;
                 old_as_value = margerr_as ./ denorm_as;
-                new_as_value = (margerr_as-delta_amp)./denorm_as;
-                % compute amp energy
+                new_as_value = (margerr_as-delta_amp) ./ denorm_as;
+                % compute amplification contribution to the energy
                 E_amp = -abs(old_at_value)+abs(new_at_value)-abs(old_as_value)+abs(new_as_value);
             end
         end
@@ -201,4 +195,7 @@ end
 
 stat_final = sum(abs((rand_marg-marg)./max(marg,2500))); %! switch from L2 to L1 readout 
 %!stat_final = sum(((rand_marg-marg)./max(marg,2500)).^2);
+
+
+end
 

@@ -1,5 +1,5 @@
 function [idx_mat2,rand_margs2,stat_final,stat_data] = corrperm_lockstep_schedule(margs,rand_margs,idx_mat1,step,samples,min_bin,opts)
-%CORRPERM_TEMPERING_SCHEDULE - parameterized basic simulated tempering
+%CORRPERM_LOCKSTEP_SCHEDULE - parameterized basic simulated tempering
 %
 % [IDX_MAT2,RAND_MARGS2,STAT_FINAL,STAT_DATA] = corrperm_tempering_schedule(...
 %           MARGS,RAND_MARGS,IDX_MAT1,STEP,SAMPLES,MIN_BIN,OPTS)
@@ -59,8 +59,10 @@ if isfield(opts,'final') && opts.final.iters > 0
                             opts.final.temp,opts.final.step,samples,min_bin,opts);
     stat_data = catstats(stat_data,new_stats);
 end
+end
 
 %% subfunction: catenate statistics
+
 function data = catstats(data,new_data)
 
 if isempty(data)
@@ -71,3 +73,6 @@ else
         data.(f) = [data.(f);new_data.(f)];
     end
 end
+
+end
+

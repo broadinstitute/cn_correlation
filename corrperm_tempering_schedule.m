@@ -26,7 +26,6 @@ stat_data = [];
                         idx_mat1,opts.initial.iters,opts.initial.temp,...
                         opts.initial.step,samples,min_bin,opts);
 stat_data = catstats(stat_data,new_stats);
-%!test1 = stats_all(end,:);
 
 %% tempering cycle(s)
 if isfield(opts,'cycle')
@@ -52,14 +51,18 @@ end
                         opts.final.temp,opts.final.step,samples,min_bin,opts);
 stat_data = catstats(stat_data,new_stats);
 
-%% subfunction: catenate statistics
-function data = catstats(data,new_data)
+end % function
 
-if isempty(data)
-    data = new_data;
-else
-    for fld = fields(new_data)'
-        f = fld{1};
-        data.(f) = [data.(f);new_data.(f)];
+%% subfunction: catenate statistics
+% updates a struct of vectors
+function data = catstats(data,new_data)
+    if isempty(data)
+        data = new_data;
+    else
+        for fld = fields(new_data)'
+            f = fld{1};
+            data.(f) = [data.(f);new_data.(f)];
+        end
     end
 end
+
