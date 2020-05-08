@@ -109,7 +109,7 @@ keyboard
 
 %% LSF runs
 
-corrperm_lsf_submission('corrperm_ampdel_tempering_module',ref_dir,perm_dir,500,100,temparams);
+corrperm_lsf_submission('corrperm_ampdel_tempering_module',ref_dir,perm_dir,100,50,temparams);
 
 %% wait for all those permutations to complete!
 keyboard
@@ -125,5 +125,5 @@ options.lineage_out = unique({D.sis.gcmtype});
 options.perm_file_mask = 'idx_cell.chunk.*.mat';
 options.pcount = 0;
 
-corrperm_analyze_pairs(ref_dir,perm_dir,ref_dir,options);
+corrperm_analyze_pairs2(ref_dir,perm_dir,ref_dir,options);
 %corrperm_analyze_features(features,ref_dir,perm_dir,ref_dir,options);
