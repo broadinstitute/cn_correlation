@@ -141,11 +141,11 @@ params.broad_len_cutoff = options.broad_len_cutoff;
 verbose('saving permutation input files.',20)
 
 % inputs to permutation engine
-save([work_dir 'new_samples.mat'],'new_samples')
-save([work_dir 'margs.mat'],'margs_sort')
+save(fullfile(work_dir,'new_samples.mat'),'new_samples');
+save(fullfile(work_dir,'margs.mat'),'margs_sort');
 
 % inputs to evaluator
-save([work_dir 'Binary_amps.mat'],'Binary_amps')
-save([work_dir 'Binary_dels.mat'],'Binary_dels')
-save([work_dir 'D.mat'],'D');
-save([work_dir 'peak_regs.mat'],'regs');
+save(fullfile(work_dir,'Binary_amps.mat'),'Binary_amps');
+save(fullfile(work_dir,'Binary_dels.mat'),'Binary_dels');
+save(fullfile(work_dir,'D.mat'),'D');
+save(fullfile(work_dir,'peak_regs.mat'),'regs');

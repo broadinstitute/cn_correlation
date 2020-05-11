@@ -32,28 +32,12 @@ save(fullfile(ref_dir,'permute_options.mat'),'opts','permuter','perm_dir','Njobs
 
 % wrapper script !!!TODO existence test
 wrapscript = which('corrperm_lsf_wrapper.sh');
-
-srcpath = which(permuter); % path to source matlab function
-if isempty(srcpath)
-    throw(MException('matlab:submit_perm_jobs:no_src',...
-                     'cannot find source file ''%s''.',permuter));
-else
-    % check for executable in pwd
-    executable = fullfile(pwd,permuter);
-    if exist(executable,'file')
-        % check to see if recompile is needed ('make' functionality)
-        exeinfo = dir(executable);
-        srcinfo = dir(srcpath);
-        if datenum(exeinfo.date) < datenum(srcinfo.date)
-            mcc('-m',srcpath);
-            %! TODO!!! use deptree to get all dependencies for date
-            %checking
-        end
-    else
-        % executable does not exist - compile it
-        mcc('-m','-v',srcpath);
-    end
+if isempty(wrapscript)
+    error('cannot find wrapper shell script for LSF');
 end
+
+% compile matlab executable and create matlabroot file
+executable = corrperm_create_executable(ref_dir,permuter);
 
 cmd_template = ['bsub ',...
           '-R "rusage[mem=4]" ',... 

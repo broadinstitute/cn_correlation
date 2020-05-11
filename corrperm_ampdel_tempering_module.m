@@ -21,9 +21,9 @@ end
 
 % load input data from files
 fprintf('loading input files\n')
-load([ref_dir 'margs.mat']);       % 'margs_sort' chromosome disruption values (chromosomes X samples X amp/del)
-load([ref_dir 'new_samples.mat']); % 'new_samples' cell array of permutation class indices
-load([ref_dir 'permute_options.mat']); % 'opts' struct for passing permutation options
+load(fullfile(ref_dir,'margs.mat'));       % 'margs_sort' chromosome disruption values (chromosomes X samples X amp/del)
+load(fullfile(ref_dir,'new_samples.mat')); % 'new_samples' cell array of permutation class indices
+load(fullfile(ref_dir,'permute_options.mat')); % 'opts' struct for passing permutation options
 
 set_verbose_level(40); %!!! put in opts
 
@@ -33,8 +33,8 @@ set_verbose_level(40); %!!! put in opts
 
 % save output to files
 fprintf('saving output files\n')
-%!save([perm_dir 'rand_margs.' chunk_number '.mat'],'rand_margs_cell')
-save([perm_dir 'idx_cell.' chunk_number '.mat'],'idx_cell')
-save([perm_dir 'stat_finals.' chunk_number '.mat'],'stat_finals')
-save([perm_dir 'stats.' chunk_number '.mat'],'stats')
-fprintf('annealing_permutations module complete\n');
+%!save(fullfile(perm_dir,['rand_margs.' chunk_number '.mat'],'rand_margs_cell')
+save(fullfile(perm_dir,['idx_cell.',chunk_number,'.mat']),'idx_cell')
+save(fullfile(perm_dir,['stat_finals.',chunk_number,'.mat']),'stat_finals')
+save(fullfile(perm_dir,['stats.',chunk_number,'.mat'],'stats')
+fprintf('annealing_permutations module complete for chunk\n');

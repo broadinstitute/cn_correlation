@@ -86,14 +86,14 @@ Nperms = 0; % initialize permutation count
 
 %% loop over permutation results files
 
-files = dir([perm_dir,options.perm_file_mask]);
+files = dir(fullfile(perm_dir,options.perm_file_mask));
 
 verbose('Reading %d permutation chunks from ''%s''',10,length(files),perm_dir);
 
 for k = 1:length(files)
     verbose(files(k).name,10);
     tic
-    load([perm_dir,files(k).name]);  % 'idx_cell' cell array, each element NCHR x Nsamples
+    load(fullfile(perm_dir,files(k).name));  % 'idx_cell' cell array, each element NCHR x Nsamples
     npf = length(idx_cell);
 
     % get number of chromosomes from first chunk of permutations
@@ -236,14 +236,17 @@ toc
 verbose('saving results',10);toc
 
 % save binaries for forensics
-save([save_dir 'pair_results',ext,'.mat'],'regs_idx','p_corr','p_anti','p_cpow','p_apow');
-%!save([save_dir 'pair_perm_tot',ext,'.mat'],'perm_tot');
-save([save_dir 'pair_obs_tot',ext,'.mat'],'obs_tot');
+save(fullfile(save_dir,['pair_results',ext,'.mat']),'regs_idx','p_corr','p_anti','p_cpow','p_apow');
+%!save(fullfile(save_dir,['pair_perm_tot',ext,'.mat'],'perm_tot');
+save(fullfile(save_dir,['pair_obs_tot',ext,'.mat']),'obs_tot');
 
-% save text results files
-save_pair_pvalues(regs,[p_anti,regs_idx,p_apow],[save_dir,'anticorr_pair',ext,'.txt'],...
-                1,options.sig_thresh,options.power_thresh);
-save_pair_pvalues(regs,[p_corr,regs_idx,p_cpow],[save_dir,'correlate_pair',ext,'.txt'],...
-                1,options.sig_thresh,options.power_thresh);
+% save significance results files
+save_pair_pvalues(regs,[p_anti,regs_idx,p_apow],...
+                  fullfile(save_dir,['anticorr_pair',ext,'.txt']),...
+                  1,options.sig_thresh,options.power_thresh);
+save_pair_pvalues(regs,[p_corr,regs_idx,p_cpow],...
+                  fullfile(save_dir,['correlate_pair',ext,'.txt']),...
+                  1,options.sig_thresh,options.power_thresh);
+
 
 

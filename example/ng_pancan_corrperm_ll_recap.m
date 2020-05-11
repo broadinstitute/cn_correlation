@@ -10,14 +10,14 @@ clear
 set_verbose_level(40)
 
 % local working directories
-ref_dir = [pwd,'/ll_work/'];     % where permutation inputs are stored
-perm_dir = [ref_dir,'/ll_permout/']; % where permutation outputs are stored
-
+ref_dir = fullfile(pwd,'ll_work/');     % where permutation inputs are stored
+perm_dir = fullfile(ref_dir,'ll_permout'); % where permutation output chunk files are stored
+results_dir = fullfile(ref_dir,'/ll_results/'); % where significance results are stored
 % input files
-gistic_peaks_file = [pwd,'/peak_regs.blen0.5_narmp.mat']; % peak results from GISTIC
-gistic_data_file = [pwd,'/D.cap1.5.blen0.5_narmp.mat'];   % copy-number data w/ziggurat 
-peak_name_files = {[pwd,'/amp_peak_info.txt'],[pwd,'/del_peak_info.txt']}; % peak friendly names
-subtype_info_file = [pwd,'/pancan12.sample_info_w_subtypes.130815.txt'];   % subtype information
+gistic_peaks_file = fullfile(pwd,'peak_regs.blen0.5_narmp.mat'); % peak results from GISTIC
+gistic_data_file = fullfile(pwd,'/D.cap1.5.blen0.5_narmp.mat');   % copy-number data w/ziggurat 
+peak_name_files = {fullfile(pwd,'/amp_peak_info.txt'),fullfile(pwd,'/del_peak_info.txt')}; % peak friendly names
+subtype_info_file = fullfile(pwd,'/pancan12.sample_info_w_subtypes.130815.txt');   % subtype information
 
 % "bare load" matlab peak file into variable 'regs'
 load(gistic_peaks_file);
@@ -102,28 +102,35 @@ trials = 4;
 [rand_margs_cell,idx_cell,stat_finals,stats] = corrperm_ampdel_tempering(margs_sort,new_samples,trials,temparams);
 corrperm_display_stats(stats);
 
+% save trial run schedule
+figure;
+corrperm_display_stats(stats);
+save_current_figure(fullfile(pwd,'ll.tuning_stats'),{'png','pdf'});
+
 mean_err = mean(vertcat(stat_finals{:}))
 std_err = std(vertcat(stat_finals{:}))
 
-keyboard
+%! no tuning pause for now
+%! keyboard
 
 %% LSF runs
-
+% do 5000 permutations
 corrperm_lsf_submission('corrperm_ampdel_tempering_module',ref_dir,perm_dir,100,50,temparams);
+%!corrperm_uger_submission('corrperm_ampdel_tempering_module',ref_dir,perm_dir,100,50,temparams);
 
-%% wait for all those permutations to complete!
+% wait for all those permutations to complete!
 keyboard
 
-% analyze pair correlations
+%% analyze pair correlations
 options = struct;
 options.sig_thresh = 0.95;
 options.power_thresh = 0.1;
 options.tail = 'both';
 options.split_eq = true;
 options.ext = 'll_pair';
-options.lineage_out = unique({D.sis.gcmtype});
+options.lineage_out = unique({D.sis.disease});
 options.perm_file_mask = 'idx_cell.chunk.*.mat';
 options.pcount = 0;
 
-corrperm_analyze_pairs2(ref_dir,perm_dir,ref_dir,options);
+corrperm_analyze_pairs2(ref_dir,perm_dir,results_dir,options);
 %corrperm_analyze_features(features,ref_dir,perm_dir,ref_dir,options);

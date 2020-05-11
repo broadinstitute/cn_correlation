@@ -4,8 +4,8 @@ function corrperm_uger_submission(permuter,ref_dir,perm_dir,Njobs,Niters,opts)
 % uger_submission(permuter,refdir,permdir,Njobs,Niters,options)
 %
 % PERMUTER name of the matlab function that executes a chunk of permutations
-% REFDIR file path to directory containing inputs
-% PERMDIR file path to directory where output chunk files will be stored
+% REF_DIR file path to directory containing inputs
+% PERM_DIR file path to directory where output chunk files will be stored
 % NJOBS is the number of chunks (schedulings of the permuter)
 % NITERS is the number of permutations to perform per chunk
 % OPTS is a struct containing PERMUTER-dependent tuning parameters
@@ -30,33 +30,17 @@ if ~exist(perm_dir,'dir')
     mkdir(perm_dir);
 end
 
-% wrapper script !!!TODO existence test
-wrapscript = which('corrperm_uger_wrapper.sh');
+% compile matlab executable and create matlabroot file
+executable = corrperm_create_executable(ref_dir,permuter);
 
-srcpath = which(permuter);
-if isempty(srcpath)
-    throw(MException('matlab:submit_perm_jobs:no_src',...
-                     'cannot find source file ''%s''.',permuter));
-else
-    % check for compiled executable in pwd
-    executable = fullfile(pwd,permuter);
-    if exist(executable,'file')
-        % check to see if recompile is needed ('make' functionality)
-        exeinfo = dir(executable);
-        srcinfo = dir(srcpath);
-        if datenum(exeinfo.date) < datenum(srcinfo.date)
-            mcc('-m',srcpath);
-            %! TODO!!! use deptree to get all dependencies for date
-            %checking
-        end
-    else
-        % executable does not exist - compile it
-        mcc('-m','-v',srcpath);
-    end
+% wrapper script
+wrapscript = which('corrperm_uger_wrapper.sh');
+if isempty(wrapscript)
+    error('cannot find wrapper shell script for UGER');
 end
 
 % create a launch script file in the reference directory
-launch_script = [ref_dir,'launch_perms.sh'];
+launch_script = fullfile(ref_dir,'launch_perms.sh');
 verbose('creating launch script ''%s''.',20,launch_script);
 fid = fopen(launch_script,'w');
 fprintf(fid,'qsub -t 1-%d -wd %s %s %s %s %s %d\n',...

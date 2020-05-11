@@ -13,6 +13,7 @@ options = impose_default_value(options,'power_thresh',0.1); % cutoff for minimum
 options = impose_default_value(options,'split_eq',false);    % set to split obs==permuted between tail and body 
 options = impose_default_value(options,'pcount',1);          % set to split obs==permuted between tail and body 
 options = impose_default_value(options,'perm_file_mask','idx_cell*'); % for finding permutation chunk files
+
 % input warnings
 if options.split_eq
      warning('The ''split_eq'' way of calculating P-values is deprecated.');
@@ -58,7 +59,7 @@ chr_dels = [regs{2}.chrn];
 
 
 %% Actually grab output and analyze permutations
-files = dir([perm_dir,options.perm_file_mask]);
+files = dir(fullfile(perm_dir,options.perm_file_mask));
 [Nevents,Nsamples] = size(Binary);
 
 Nperms = 0; % permutation count
@@ -67,7 +68,7 @@ verbose('Reading %d permutation chunks from ''%s''',10,length(files),perm_dir);
 % loop over permutation results files
 for k = 1:length(files)
     verbose(files(k).name,10);
-    load([perm_dir,files(k).name]);  % 'idx_cell', each element NCHR x Nsamples
+    load(fullfile(perm_dir,files(k).name));  % 'idx_cell', each element NCHR x Nsamples
     npf = length(idx_cell);
     % create storage for permutation results across files
     if ~exist('Binary1','var')
@@ -259,14 +260,14 @@ toc
 verbose('saving results',10);toc
 
 % save binaries for forensics
-save([save_dir 'pair_results',ext,'.mat'],'regs_idx','p_corr','p_anti','p_cpow','p_apow','p_equal');
-save([save_dir 'pair_perm_tot',ext,'.mat'],'perm_tot');
-save([save_dir 'pair_obs_tot',ext,'.mat'],'obs_tot');
+save(fullfile(save_dir,['pair_results',ext,'.mat']), 'regs_idx','p_corr','p_anti','p_cpow','p_apow','p_equal');
+save(fullfile(save_dir,['pair_perm_tot',ext,'.mat']),'perm_tot');
+save(fullfile(save_dir,['pair_obs_tot',ext,'.mat']),'obs_tot');
 
-% save text results files
-save_pair_pvalues(regs,[p_anti,regs_idx,p_apow],[save_dir,'anticorr_pair',ext,'.txt'],...
-                1,options.sig_thresh,options.power_thresh);
-save_pair_pvalues(regs,[p_corr,regs_idx,p_cpow],[save_dir,'correlate_pair',ext,'.txt'],...
-                1,options.sig_thresh,options.power_thresh);
-
-save('/xchip/beroukhimlab/gistic/corrperm/debug_cpap1.mat')
+% save significance results files
+save_pair_pvalues(regs,[p_anti,regs_idx,p_apow],...
+                  fullfile(save_dir,['anticorr_pair',ext,'.txt']),...
+                  1,options.sig_thresh,options.power_thresh);
+save_pair_pvalues(regs,[p_corr,regs_idx,p_cpow],...
+                  fullfile(save_dir,['correlate_pair',ext,'.txt']),...
+                  1,options.sig_thresh,options.power_thresh);
