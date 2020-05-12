@@ -110,8 +110,8 @@ save_current_figure(fullfile(pwd,'ll.tuning_stats'),{'png','pdf'});
 mean_err = mean(vertcat(stat_finals{:}))
 std_err = std(vertcat(stat_finals{:}))
 
-%! no tuning pause for now
-%! keyboard
+%tuning pause
+keyboard
 
 %% LSF runs
 % do 5000 permutations
