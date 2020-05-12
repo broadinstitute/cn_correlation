@@ -81,6 +81,20 @@ K>> return
 # More likely you will keep editing corrperm_lsf_submission.m and
 # resubmitting until it works. To resubmit, type
 
->> corrperm_lsf_submission('corrperm_ampdel_tempering_module',ref_dir,perm_dir,100,50,temparams);
+>> corrperm_lsf_resub(ref_dir)
+
+# This matlab function picks up the parameters from the last LSF
+# submission stored in the file permute_options.mat in the reference 
+# directory and attempts a rerun. 
+
+#->> analyze data
+
+The last 10-ish lines of ng_pancan_corrperm_ll_recap do a "pairs2"
+analysis of the data. I snipped them off and put them in
+the file example/analyze_ll_pairs2.m to define a matlab command script you can
+run by typing
+
+>> analyze_ll_pairs2
+
                                                                                 
 
