@@ -122,8 +122,25 @@ verbose('saving permutation input files.',20)
 save(fullfile(work_dir,'new_samples.mat'),'new_samples');
 save(fullfile(work_dir,'margs.mat'),'margs_sort');
 
+%! permutation input as single package
+H = struct;
+H.sdesc = D.sdesc;
+H.margs = margs_sort;
+H.classes = new_samples;
+save(fullfile(work_dir,'H.mat'),'H');
+
 % inputs to evaluator
 save(fullfile(work_dir,'Binary_amps.mat'),'Binary_amps');
 save(fullfile(work_dir,'Binary_dels.mat'),'Binary_dels');
 save(fullfile(work_dir,'D.mat'),'D');
 save(fullfile(work_dir,'peak_regs.mat'),'regs');
+
+%! event map as a single package
+E = struct;
+E.sdesc = D.sdesc;
+E.event = struct;
+E.event.name = [strcat('amp_',{regs{1}.name}),strcat('del_',{regs{1}.name})]';
+E.event.type = repmat(1,length(regs{1}),1);repmat(2,length(regs{2}),1);
+E.event.chrn = [regs{1}.chrn,regs{2}.chrn]';
+E.dat = [Binary_amps;Binary_dels];
+save(fullfile(work_dir,'Emap.mat'),'E');
