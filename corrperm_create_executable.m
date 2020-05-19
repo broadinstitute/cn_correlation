@@ -45,6 +45,7 @@ end
 mlr_file = fullfile(ref_dir,'matlabroot');
 if ~exist(mlr_file,'file')
     % if it doesn't exist, recompile
+    verbose('recompile needed: no matlabroot',20)
     need_compile = true;
 else
     % if it doesn't match current version of matlab, recompile
@@ -52,20 +53,23 @@ else
     if rv ~= 0
         error('cannot access matlab root file ''%s''',mlr_file);
     end
-    if strcmp(old_mlr,mlr_text)
+    if ~strcmp(old_mlr,mlr_text)
+        verbose('recompile needed: matlabroot changed',20)
         need_compile = true;
     end
 end
 % figure out status of executable
 if ~exist(exepath)
     % if it doesn't exist, recompile
-    recompile = true;
+    verbose('recompile needed: no executable',20)
+    need_recompile = true;
 else
     % if the source module is newer that the executable, recompile
     %@!!! NOTE: doesn't check date of other dependent source files)
     exeinfo = dir(exepath);
     srcinfo = dir(srcpath);
     if datenum(exeinfo.date) < datenum(srcinfo.date)
+        verbose('recompile needed: source newer than executable',20)
         need_compile = true;
     end
 end
