@@ -35,7 +35,7 @@ set_verbose_level(40); %!!! put in opts
 fprintf('saving output files\n')
 %!save(fullfile(perm_dir,['rand_margs.',cycle_number,'.mat']),'rand_margs_cell')
 save(fullfile(perm_dir,['idx_cell.',cycle_number,'.mat']),'idx_cell')
-save(fullfile(perm_dir,['stats.',chunk_number,'.mat'],'stats')
+save(fullfile(perm_dir,['stats.',cycle_number,'.mat']),'stats')
 save(fullfile(perm_dir,['stat_finals.',cycle_number,'.mat']),'stat_finals')
 fprintf('annealing_permutations module complete\n')
 

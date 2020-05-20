@@ -32,9 +32,9 @@ set_verbose_level(40); %!!! put in opts
 
 
 % save output to files
-fprintf('saving output files\n')
+fprintf('saving output files\n');
 %!save(fullfile(perm_dir,['rand_margs.' chunk_number '.mat'],'rand_margs_cell')
-save(fullfile(perm_dir,['idx_cell.',chunk_number,'.mat']),'idx_cell')
-save(fullfile(perm_dir,['stat_finals.',chunk_number,'.mat']),'stat_finals')
-save(fullfile(perm_dir,['stats.',chunk_number,'.mat'],'stats')
+save(fullfile(perm_dir,['idx_cell.',chunk_number,'.mat']),'idx_cell');
+save(fullfile(perm_dir,['stat_finals.',chunk_number,'.mat']),'stat_finals');
+save(fullfile(perm_dir,['stats.',chunk_number,'.mat']),'stats');
 fprintf('annealing_permutations module complete for chunk\n');
