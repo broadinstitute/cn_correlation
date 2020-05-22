@@ -30,10 +30,10 @@ end
 % save annealing parameters in opts, plus other stuff for ease of resubmission
 save(fullfile(ref_dir,'permute_options.mat'),'opts','permuter','perm_dir','Njobs','Niters');
 
-% wrapper script !!!TODO existence test
-wrapscript = which('corrperm_lsf_wrapper.sh');
+% find wrapper script
+wrapscript = which('matenvwrap.sh');
 if isempty(wrapscript)
-    error('cannot find wrapper shell script for LSF');
+    error('cannot find matlab wrapper shell script');
 end
 
 % compile matlab executable and create matlabroot file

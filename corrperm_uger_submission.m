@@ -34,25 +34,27 @@ end
 executable = corrperm_create_executable(ref_dir,permuter);
 
 % wrapper script
-wrapscript = which('corrperm_uger_wrapper.sh');
+wrapscript = which('matenvwrap.sh');
 if isempty(wrapscript)
-    error('cannot find wrapper shell script for UGER');
+    error('cannot find matlab wrapper shell script');
 end
 
 % create a launch script file in the reference directory
 launch_script = fullfile(ref_dir,'launch_perms.sh');
 verbose('creating launch script ''%s''.',20,launch_script);
 fid = fopen(launch_script,'w');
-fprintf(fid,'qsub -t 1-%d -wd %s %s %s %s %s %d\n',...
-        Njobs,perm_dir,wrapscript,executable,ref_dir,perm_dir,Niters);
+for j = 1:Njobs
+    runid = sprintf('cycle%03d',j);
+    fprintf(fid,'qsub -N corrperm -b y -wd %s -o %s.out.txt -e %s.err.txt %s %s %s %s %s %d\n',...
+            perm_dir,runid,runid,wrapscript,executable,ref_dir,perm_dir,runid,Niters);
+end
 fclose(fid);
 unix(['chmod u+x ',launch_script]);
 
-
-% submit to GridEngine as an array job (-t 1-N)
-unix_str = ['qsub -t 1-',num2str(Njobs),' -wd ',perm_dir,...
-            ' ',wrapscript,' ',executable,' ',ref_dir,' ',perm_dir,' ',num2str(Niters)];
-
-fprintf('submitting qsub command:\n  ''%s''\n',unix_str);
-[r1,r2]=unix(unix_str);
-disp([strtrim(r2) ' Exit code: ' num2str(r1)]);
+%% submit to GridEngine as an array job (-t 1-N)
+%unix_str = ['qsub -t 1-',num2str(Njobs),' -wd ',perm_dir,...
+%            ' ',wrapscript,' ',executable,' ',ref_dir,' ',perm_dir,' ',num2str(Niters)];
+%
+%fprintf('submitting qsub command:\n  ''%s''\n',unix_str);
+%[r1,r2]=unix(unix_str);
+%disp([strtrim(r2) ' Exit code: ' num2str(r1)]);
