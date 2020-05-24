@@ -1,4 +1,4 @@
-function [rand_margs_cell,idx_cell,stat_finals,stats] = corrperm_ampdel_tempering(margs,samples,iters,opts)
+function [rand_margs_cell,idx_cell,stat_finals,stats] = corrperm_ampdel_tempering(margs,samples,iters,opts,varargin)
 %CORRPERM_AMPDEL_TEMPERING iterate over rounds of simulated tempered annealing
 %
 %   [RAND_MARGS_CELL,IDX_CELL,STATS] = 
@@ -38,14 +38,6 @@ for i = 1:Nchr      % loop over chromosomes
         min_bin(i,j) = min(test) + opts.minbinmin;
     end
 end
-
-% randomize random number generator for this chunk
-if str2num(regexprep(version,'\.[0-9]+\.[0-9]+ \(R.+\)$','')) >= 8.0
-    rng('shuffle') % Matlab R2012b and later
-else
-    rand('seed',rem(now*10e9,1e6));disp(randperm(10)); %! Matlab R2010b: no 'rng', seed rng from wall clock
-end
-%min_bin = 100.*ones(23,2);%min_bin;
 
 rand_margs_cell = cell(1,iters);
 stats = cell(1,iters);

@@ -1,4 +1,4 @@
-function [rand_margs_cell,idx_cell,stat_finals,stats] = corrperm_ampdel_lockstep(margs,samples,iters,opts)
+function [rand_margs_cell,idx_cell,stat_finals,stats] = corrperm_ampdel_lockstep(margs,samples,iters,opts,varargin)
 %CORRPERM_AMPDEL_LOCKSTEP iterate over rounds of simulated tempered annealing
 %
 %   [RAND_MARGS_CELL,IDX_CELL,STATS] = 
@@ -34,12 +34,6 @@ for i = 1:Nchr      % loop over chromosomes
         min_bin(i,j) = min(test) + opts.minbinmin;
     end
 end
-
-% seed random number generator from clock
-rng('shuffle') % Matlab R2102b
-%!rand('seed',now); %! Matlab R2010b: no 'rng'
-
-%min_bin = 100.*ones(23,2);%min_bin;
 
 rand_margs_cell = cell(1,iters);
 stats = cell(1,iters);

@@ -1,4 +1,4 @@
-function corrperm_ampdel_lockstep_module(ref_dir,perm_dir,cycle_number,iters)
+function corrperm_ampdel_lockstep_module(ref_dir,perm_dir,cycle_number,iters,varargin)
 %ANNEALING_PERMUTATIONS_MODULE - module wrapper for ANNEALING_PERMUTATIONS
 %
 %   annealing_permutations_module(INPUT_DIR,OUTPUT_DIR,CHUNK_NUMBER,ITERS)
@@ -27,9 +27,17 @@ load(fullfile(ref_dir,'permute_options.mat')); % 'opts' struct for passing permu
 
 set_verbose_level(40); %!!! put in opts
 
+% check for optional random number generator seed argument
+if length(varargin) > 0
+    % do reproducible permutations using specified seed
+    seed = randseed(str2num(varargin{1}));
+else
+    seed = randseed();
+end
+fprintf('RNG seed: %d\n',seed); 
+
 % do permutations
 [rand_margs_cell,idx_cell,stat_finals] = corrperm_ampdel_lockstep(margs_sort,new_samples,iters,opts);
-
 
 % save output to files
 fprintf('saving output files\n')
@@ -39,4 +47,4 @@ save(fullfile(perm_dir,['stats.',cycle_number,'.mat']),'stats')
 save(fullfile(perm_dir,['stat_finals.',cycle_number,'.mat']),'stat_finals')
 fprintf('annealing_permutations module complete\n')
 
-
+end % function

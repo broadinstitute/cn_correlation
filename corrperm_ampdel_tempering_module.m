@@ -1,4 +1,4 @@
-function corrperm_ampdel_tempering_module(ref_dir,perm_dir,chunk_number,iters)
+function corrperm_ampdel_tempering_module(ref_dir,perm_dir,chunk_number,iters,varargin)
 %ANNEALING_PERMUTATIONS_MODULE - module wrapper for ANNEALING_PERMUTATIONS
 %
 %   annealing_permutations_module(INPUT_DIR,OUTPUT_DIR,CHUNK_NUMBER,ITERS)
@@ -27,9 +27,17 @@ load(fullfile(ref_dir,'permute_options.mat')); % 'opts' struct for passing permu
 
 set_verbose_level(40); %!!! put in opts
 
-% do permutations
-[rand_margs_cell,idx_cell,stat_finals,stats] = corrperm_ampdel_tempering(margs_sort,new_samples,iters,opts);
+% check for optional random number generator seed argument
+if length(varargin) > 0
+    % do reproducible permutations using specified seed
+    seed = randseed(str2num(varargin{1}));
+else
+    seed = randseed();
+end
+fprintf('RNG seed: %d\n',seed); 
 
+% do permutations
+[~,idx_cell,stat_finals,stats] = corrperm_ampdel_tempering(margs_sort,new_samples,iters,opts);
 
 % save output to files
 fprintf('saving output files\n');
@@ -38,3 +46,6 @@ save(fullfile(perm_dir,['idx_cell.',chunk_number,'.mat']),'idx_cell');
 save(fullfile(perm_dir,['stat_finals.',chunk_number,'.mat']),'stat_finals');
 save(fullfile(perm_dir,['stats.',chunk_number,'.mat']),'stats');
 fprintf('annealing_permutations module complete for chunk\n');
+
+end % function
+
