@@ -1,4 +1,4 @@
-function corrperm_uger_submission(permuter,ref_dir,perm_dir,Njobs,Niters,opts)
+function perm_submit(permuter,ref_dir,perm_dir,Njobs,Niters,opts)
 %UGER_SUBMISSION submit permutation test to Univa Grid Engine for Research
 %
 % uger_submission(permuter,refdir,permdir,Njobs,Niters,options)
@@ -33,28 +33,47 @@ end
 % compile matlab executable and create matlabroot file
 executable = corrperm_create_executable(ref_dir,permuter);
 
-% wrapper script
+% Find the wrapper script that will set up the matlab environment 
 wrapscript = which('matenvwrap.sh');
 if isempty(wrapscript)
-    error('cannot find matlab wrapper shell script');
+    error('cannot find matlab wrapper shell script ''matenvwrap.sh''');
+end
+
+platsub_file = 'lsf.submit'; %!!! from settings
+platsub = which(platsub_file);
+if isempty(platsub)
+    error(['cannot find platform-specific MPE command file ''',mpe_plat_file,'''']);
+end
+
+mpe_cmd = which('mpe_cmd.sh');
+if isempty(mpe_cmd)
+    error('cannot find MPE variable setup file ''mpe_cmd.sh''');
 end
 
 % create a launch script file in the reference directory
+%!!! should name be changeable? Or should it be in the perm_dir?
 launch_script = fullfile(ref_dir,'launch_perms.sh');
 verbose('creating launch script ''%s''.',20,launch_script);
+
+%% create launch script with an entry for each job
 fid = fopen(launch_script,'w');
 for j = 1:Njobs
     runid = sprintf('cycle%03d',j);
-    fprintf(fid,'qsub -N corrperm -b y -wd %s -o %s.out.txt -e %s.err.txt %s %s %s %s %s %d\n',...
-            perm_dir,runid,runid,wrapscript,executable,ref_dir,perm_dir,runid,Niters);
+    % Create a nested command to build a command to submit a job to a multi-processing environment using unix.
+    % The first command names a platform-generic shell script that sets some environment variables and then sources 
+    % the next field, a platform-specific fragment that echos a "submit job" command for the MPE platform.
+    % The third and remaining fields are the command and arguments to be run when the task is executed.
+    % But the dance goes on: the first thing executed is a bash script that sets up the matlab environment,
+    % then (finally!) launches the compiled matab executable along with its arguments.
+    [s,cmdstr] = unix(strjoin({mpe_cmd,platsub,wrapscript,executable,ref_dir,perm_dir,runid,num2str(Niters)}));
+    if s ~= 0
+        error('creating command from template failed');
+    end
+    fprintf(fid,cmdstr);
 end
 fclose(fid);
 unix(['chmod u+x ',launch_script]);
 
-%% submit to GridEngine as an array job (-t 1-N)
-%unix_str = ['qsub -t 1-',num2str(Njobs),' -wd ',perm_dir,...
-%            ' ',wrapscript,' ',executable,' ',ref_dir,' ',perm_dir,' ',num2str(Niters)];
-%
-%fprintf('submitting qsub command:\n  ''%s''\n',unix_str);
-%[r1,r2]=unix(unix_str);
-%disp([strtrim(r2) ' Exit code: ' num2str(r1)]);
+%!!! optionally, launch immediately by executing the script
+
+end % function

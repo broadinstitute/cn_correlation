@@ -1,0 +1,1 @@
+echo qsub -N corrperm -b y -o $OUTFILE -e $ERRFILE -wd $WORK_DIR $*
