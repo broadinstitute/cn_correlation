@@ -99,10 +99,10 @@ temparams.final.temp = [1e6,1e6];
 
 %% test/tuning runs
 trials = 4;
-[rand_margs_cell,idx_cell,stat_finals,stats] = corrperm_ampdel_tempering(margs_sort,new_samples,trials,temparams);
+[~,~,stat_finals,stats] = corrperm_ampdel_tempering(margs_sort,new_samples,trials,temparams);
 corrperm_display_stats(stats);
 
-% save trial run schedule
+% save plot of trial run schedule
 figure;
 corrperm_display_stats(stats);
 save_current_figure(fullfile(pwd,'ll.tuning_stats'),{'png','pdf'});
@@ -115,8 +115,7 @@ keyboard
 
 %% LSF runs
 % do 5000 permutations
-corrperm_lsf_submission('corrperm_ampdel_tempering_module',ref_dir,perm_dir,100,50,temparams);
-%!corrperm_uger_submission('corrperm_ampdel_tempering_module',ref_dir,perm_dir,100,50,temparams);
+submit_perms('corrperm_ampdel_tempering_module','lsf.submit',ref_dir,perm_dir,100,50,temparams);
 
 % wait for all those permutations to complete!
 keyboard
