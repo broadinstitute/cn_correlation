@@ -1,4 +1,4 @@
-function export_emap(fname,E)
+function export_emap(E,fname)
 %EXPORT_EMAP write event map to a text file
 %
 %    export_emap(EMAP,FNAME)
@@ -8,8 +8,8 @@ function export_emap(fname,E)
 %
     %% write event map text file
     tb = char(9); % tab character delimiter
-    fad = {'f','a','d'};
-    O12 = {'0','1','2'};
+    fad = {'f','a','d'}; % map integer to event type
+    O12 = {'0','1','2'}; % map logical matrix to char
     fid = fopen(fname,'w');
     fprintf(fid,['name',tb,strjoin(E.event.name',tb),'\n']);
     fprintf(fid,['type',tb,strjoin(fad(E.event.type+1),tb),'\n']);

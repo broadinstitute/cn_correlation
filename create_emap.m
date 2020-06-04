@@ -1,7 +1,7 @@
-function create_emap(D,regs,Binary_amps,Binary_dels);
-%CREATE_XRUPT create genomic disruption structure from processed GISTIC inputs
+function E = create_emap(D,regs,Binary_amps,Binary_dels);
+%CREATE_EMAP create genomic disruption structure from processed GISTIC inputs
 %
-%    XRUPT = create_xrupt(D,REGS,AMP_MATRIX,DEL_MATRIX)
+%    EMAP = create_emap(D,REGS,AMP_MATRIX,DEL_MATRIX)
 %
 % D is a GISTIC copy number structure
 % REGS is a GISTIC peak region file
@@ -27,10 +27,6 @@ function create_emap(D,regs,Binary_amps,Binary_dels);
 
     % event call matrix
     E.dat = [Binary_amps;Binary_dels];
-    % save event map as matlab file
-    save(fullfile(work_dir,'Emap.mat'),'E');
-    % save tab-delimited text event map
-    export_emap(E,fullfile(work_dir,'emap.txt'));
-
+ 
 end
 

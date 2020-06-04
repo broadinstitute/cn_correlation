@@ -1,4 +1,4 @@
-function export_xrupt(fname,H)
+function export_xrupt(H,fname)
 %EXPORT_XRUPT save genomic disruption structure to tab-delimited table
 %
 %     export_xrupt(FNAME,XRUPT)
@@ -9,7 +9,7 @@ function export_xrupt(fname,H)
 
     % due diligence 
     assert(isfield(H,'margs'));
-    assert(length(size(H.margs))) == 3);
+    assert(length(size(H.margs)) == 3);
     [Nchr,Nsample,Ntype] = size(H.margs);
     assert(isfield(H,'sdesc'));
     assert(Nsample==length(H.sdesc));

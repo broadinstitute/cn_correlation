@@ -18,7 +18,7 @@ function E = import_emap(fname)
 % As an input to the corrperm analysis module, the event map must also have the
 % event attribute 'type' (1 or 'a' - amplification; 2 or 'd' - deletion; 
 % 0 or 'f' - feature).
-  
+
 dlm = char(9); % default tab-delimited table
 nantext = 'NA'; %!!! disallow nans, eliminate
 nantext = ['^',nantext,'$'];
@@ -130,7 +130,7 @@ if any(diff(cellfun(@length,cols)))
 end
 
 E = struct;
-E.sdesc = cols{1}';
+E.sdesc = cols{1};
 E.event = event;
 
 Nsamples = length(E.sdesc);

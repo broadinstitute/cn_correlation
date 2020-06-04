@@ -1,7 +1,7 @@
-function submit_perms(permuter,mpe,ref_dir,perm_dir,Njobs,Niters,opts)
-%UGER_SUBMISSION submit permutation test to Univa Grid Engine for Research
+function submit_perms(H,permuter,mpe,ref_dir,perm_dir,Njobs,Niters,perm_opts)
+%SUBMIT_PERMS submit permutation test chunks to multiprocessing environment
 %
-% submit_perms(permuter,mpe,refdir,permdir,Njobs,Niters,options)
+%    submit_perms(H,PERMUTER,MPE,REFDIR,PERMDIR,NJOBS,NITERS,PERM_OPTS)
 %
 % PERMUTER name of the compiled matlab function that executes a chunk of permutations
 % MPE names a file that defines the submit command for a multiprocessing environment 
@@ -10,13 +10,13 @@ function submit_perms(permuter,mpe,ref_dir,perm_dir,Njobs,Niters,opts)
 % PERM_DIR file path to directory where output chunk files will be stored
 % NJOBS is the number of chunks (schedulings of the permuter)
 % NITERS is the number of permutations to perform per chunk
-% OPTS is a struct of permutation options
+% PERM_OPTS is a struct of permutation options
 %
 % The inputs that need to be stored in REFDIR are:
 %   - margs.mat - array of marginal disruption constraints for permutations
 %   - new_samples.mat - the class definition for each sample
 %
-% The OPTS struct is stored as 'permute_options.mat' in the REFDIR prior to
+% The PERM_OPTS struct is stored as 'perm_ops.mat' in the PERM_DIR prior to
 % submission.
 
 % need input directory
@@ -24,13 +24,14 @@ if ~exist(ref_dir,'dir')
     error('input directory doen''t exist!')
 end
 
-% save annealing parameters in opts, plus other stuff for ease of resubmission
-save(fullfile(ref_dir,'permute_options.mat'),'opts','permuter','perm_dir','Njobs','Niters');
-
 % make output directory if need be
 if ~exist(perm_dir,'dir')
     mkdir(perm_dir);
 end
+
+% save permutation options in perm_dir
+save(fullfile(perm_dir,'perm_opts.mat'),'perm_opts');
+save(fullfile(perm_dir,'H.mat'),'H');
 
 % compile matlab executable and create matlabroot file
 executable = corrperm_create_executable(ref_dir,permuter);
@@ -52,8 +53,8 @@ if isempty(mpe_cmd)
     error('cannot find MPE variable setup file ''mpe_cmd.sh''');
 end
 
-if isfield(opts,'randseed')
-    rngseed = randseed(opts.rngseed);
+if isfield(perm_opts,'randseed')
+    rngseed = randseed(perm_opts.rngseed);
 else
     rngseed = randseed();
 end
@@ -82,8 +83,9 @@ for j = 1:Njobs
     fprintf(fid,cmdstr);
 end
 fclose(fid);
-unix(['chmod u+x ',launch_script]);
 
-%!!! optionally, launch immediately by executing the script
+unix(['chmod u+x ',launch_script]);
+%!!! optionally, defer launch so script can be executed manually
+unix(launch_script);
 
 end % function
