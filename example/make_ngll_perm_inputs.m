@@ -1,5 +1,5 @@
 % script to create "low level" disruption profile and event map files
-% from 2013 GISTIC results used in Pan-Cancer 2013 Nat Gen paper
+% from 2013 GISTIC results used in Pan-Cancer 2013 Nature Genetics paper
 
 clear
 set_verbose_level(40)
@@ -71,14 +71,14 @@ options.permclass_sisfield = 'disease';
 %% save prepared data
 
 % create disruption profile, export to file
-H = create_xrupt(D,margs_sort,pcindex);
+H = create_gistic_xrupt(D,margs_sort,pcindex);
 export_xrupt(H,fullfile(pwd,'ngll.xrupt.txt'));
 save(fullfile(pwd,'ngll.xrupt.mat'),'H');
 
 % create event map from corrperm_prep output files, export to files
 load(fullfile(ref_dir,'Binary_amps.mat'));
 load(fullfile(ref_dir,'Binary_dels.mat'));
-E = create_emap(D,regs,pcindex,Binary_amps,Binary_dels);
+E = create_gistic_emap(D,regs,pcindex,Binary_amps,Binary_dels);
 %!!! format in development
 %!!!export_emap(E,fullfile(pwd,'ngll.emap.txt'));
 save(fullfile(pwd,'ngll.emap.mat'),'E');

@@ -1,16 +1,15 @@
-function E = create_emap(D,regs,pcx,Binary_amps,Binary_dels);
-%CREATE_EMAP create genomic disruption structure from processed GISTIC inputs
+function E = create_gistic_emap(D,regs,pcx,Binary_amps,Binary_dels);
+%CREATE_GISTIC_EMAP create genomic disruption structure from processed GISTIC inputs
 %
-%    EMAP = create_emap(D,REGS,AMP_MATRIX,DEL_MATRIX)
+%    EMAP = create_gistic_emap(D,REGS,AMP_MATRIX,DEL_MATRIX)
 %
-% D is a GISTIC copy number structure
-% REGS is a GISTIC peak region file
-% AMP_MATRIX & DEL_MATRIX are logical calling matrix (Nevents x Nsamples)
-%
-% MARGS is a 3D array (Nchromosomes x Nsamples x amp/del type) of disruption scores
-% PCX defines the permutation class structure of the data
+% inputs are outputs of corrperm_prep:
+%   D is a GISTIC copy number structure
+%   REGS is a GISTIC peak region file
+%   AMP_MATRIX & DEL_MATRIX are logical matrices of event calls (Nevents x Nsamples)
+%   PCX defines the permutation class structure of the data
 % 
-% The returned EMAP is an event mapping structure 
+% The returned EMAP is an event mapping structure.
 %
     % save event map for analysis as a single package
     E = struct;
