@@ -1,4 +1,4 @@
-function E = create_emap(D,regs,Binary_amps,Binary_dels);
+function E = create_emap(D,regs,pcx,Binary_amps,Binary_dels);
 %CREATE_EMAP create genomic disruption structure from processed GISTIC inputs
 %
 %    EMAP = create_emap(D,REGS,AMP_MATRIX,DEL_MATRIX)
@@ -19,12 +19,16 @@ function E = create_emap(D,regs,Binary_amps,Binary_dels);
     % event sub-structure
     E.event = struct;
     % take event names from peak names
-    E.event.name = [strcat('amp_',{regs{1}.name}),strcat('del_',{regs{1}.name})]';
-    % chromosome number from peaks
+    E.event.name = [strcat('amp_',{regs{1}.name}),strcat('del_',{regs{2}.name})]';
+    % chromosome number and residual q-value from peaks
     E.event.chrn = [regs{1}.chrn,regs{2}.chrn]';
+    E.event.resid_qv = [regs{1}.resid_qv,regs{2}.resid_qv]';
     % type: 1 = amp; 2 = del
     E.event.type = [repmat(1,length(regs{1}),1);repmat(2,length(regs{2}),1)];
 
+    % lineage fields for analysis == permutation class fields (for now)
+    E.pcx = pcx;
+    E.pcname = extract_pcname(D,pcx);
     % event call matrix
     E.dat = [Binary_amps;Binary_dels];
  

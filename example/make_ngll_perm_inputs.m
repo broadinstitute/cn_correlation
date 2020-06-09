@@ -66,18 +66,19 @@ options.max_disruption = [Inf,Inf]; % [160000,600000] for high level
 options.permclass_sisfield = 'disease';
 
 % prepare data for permutations
-[D,margs_sort,new_samples] = corrperm_prep(D,regs,ref_dir,options);
+[D,margs_sort,pcindex] = corrperm_prep(D,regs,ref_dir,options);
 
 %% save prepared data
 
 % create disruption profile, export to file
-H = create_xrupt(D,margs_sort,new_samples);
+H = create_xrupt(D,margs_sort,pcindex);
 export_xrupt(H,fullfile(pwd,'ngll.xrupt.txt'));
-%save(fullfile(ref_dir,'ngll.xrupt.mat'),'H');
+save(fullfile(pwd,'ngll.xrupt.mat'),'H');
 
 % create event map from corrperm_prep output files, export to files
 load(fullfile(ref_dir,'Binary_amps.mat'));
 load(fullfile(ref_dir,'Binary_dels.mat'));
-E = create_emap(D,regs,Binary_amps,Binary_dels);
-export_emap(E,fullfile(pwd,'ngll.emap.txt'));
-%save(fullfile(ref_dir,'ngll.emap.mat'),'E');
+E = create_emap(D,regs,pcindex,Binary_amps,Binary_dels);
+%!!! format in development
+%!!!export_emap(E,fullfile(pwd,'ngll.emap.txt'));
+save(fullfile(pwd,'ngll.emap.mat'),'E');

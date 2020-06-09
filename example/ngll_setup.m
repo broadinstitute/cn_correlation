@@ -11,7 +11,8 @@ results_dir = fullfile(ref_dir,'/ll_results/'); % where significance results are
 % load disruption profile for permutations
 H = import_xrupt('ngll.xrupt.txt');
 % load event map for analysis
-E = import_emap('ngll.emap.txt');
+%E = import_emap('ngll.emap.txt'); %!!! fix emap file format
+E = load_emap('ngll.emap.mat');
 
 %% set parameters for low-level tempered annealing
 perm_opts = struct;
@@ -59,7 +60,7 @@ anal_opts.tail = 'both';
 anal_opts.split_eq = false;
 anal_opts.ext = 'll_pair';
 anal_opts.lineage_out = unique(H.pcname);
-anal_opts.perm_file_mask = 'idx_cell.chunk.*.mat';
+anal_opts.perm_file_mask = 'idx_cell*.mat';
 anal_opts.pcount = 1;
 
 % command for running low-level analysis

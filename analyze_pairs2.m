@@ -1,10 +1,12 @@
-function corrperm_analyze_pairs2(ref_dir,perm_dir,save_dir,options)
+function analyze_pairs2(E,perm_dir,save_dir,options)
 % memory-conserving version of corrperm_analyze_pairs
+%!!!DOCME
 
 %% process optional arguments
 if ~exist('options','var')
     options = struct;
 end
+
 % optional argument defaults
 options = impose_default_value(options,'ext','');           % extension label for output files
 options = impose_default_value(options,'sig_thresh',0.25);  % cutoff for q-value
@@ -12,6 +14,11 @@ options = impose_default_value(options,'power_thresh',0.1); % cutoff for minimum
 options = impose_default_value(options,'split_eq',false);   % set to split observed===permuted between tail and body 
 options = impose_default_value(options,'pcount',1);         % pseudo count (1 or 0) 
 options = impose_default_value(options,'perm_file_mask','idx_cell*');
+options = impose_default_value(options,'lineage_out',{});
+options = impose_default_value(options,'analyze_lineages',false);%
+options = impose_default_value(options,'lineage_out',E.pcname);    % filter list of lineage subsets to analyze
+
+options
 
 % input warnings
 if options.split_eq
@@ -19,6 +26,16 @@ if options.split_eq
 end
 if options.pcount == 0
     warning('A pseudocount of 0 is deprecated.');
+end
+if options.analyze_lineages && ~isempty(options.lineage_out)
+    unklin = ~ismember(options.lineage_out,E.pcname);
+    if any(unklin)
+        warning(strjoin({'unknown lineages requested:',options.lineage_out{unklin}}));
+        if all(unklin)
+            warning('canceling lineage analysis');
+            options.analyze_lineages = false;
+        end
+    end
 end
 
 % fix output extension
@@ -32,127 +49,105 @@ if ~exist(save_dir,'dir')
     mkdir(save_dir)
 end
 
-%% read reference inputs
-verbose('Loading inputs from reference directory ''%s''',10,ref_dir);
-[~,Binary,Binary_amps,Binary_dels,samples,regs] = load_permutation_ref_inputs(ref_dir);
-% Binary are the observed events IN ORIGINAL UNOPTIMIZED SAMPLE ORDER
-%   (logical matrix, Nevents x Nsamples)
-% Binary_amps, Binary_dels is Binary separated into amps and dels
-% samples is the lineage partition, with index order optimized
-% regs are peak regions (with 'name' field added) 
-
-% lineage output controlled by a list of strings aligned with 'samples'
-% partition into lineages - if empty, no output
-if ~isfield(options,'lineage_out') || isempty(options.lineage_out)
-    % default lineage output is none
-    options.lineage_out = cell(size(samples));
+% process lineage filter
+lindices = {};
+linames = {};
+if options.analyze_lineages
+    % retain matchng lineages
+    linx = ismember(E.pcname,options.lineage_out);
+    if sum(linx) > 0
+        lindices = E.pcx(linx);
+        linames = E.pcname(linx);
+    end
 end
+Nlineages = length(lindices);
 
-Nlineages = length(samples);
-
-Namps = length(regs{1});
-Ndels = length(regs{2}); 
-
-chr_amps = [regs{1}.chrn];
-chr_dels = [regs{2}.chrn];
-
-[Nevents,Nsamples] = size(Binary);
+% get sizes from input data
+[Nevents,Nsamples] = size(E.dat);
+Nchr = length(unique(E.event.chrn));
 
 %% calculate observed co-occurrences
-Binary = Binary+0;
+% overall
+emap = double(E.dat);
+obs_tot = emap * emap';
 % by lineage
-lin_obs = zeros(Nevents,Nevents,Nlineages);
-for i = 1:Nlineages
-    lin_obs(:,:,i) = Binary(:,samples{i})*Binary(:,samples{i})';
+if Nlineages > 0
+    lin_obs = zeros(Nevents,Nevents,Nlineages);
+    for l = 1:Nlineages
+        emap = double(E.dat(:,lindices{l}));
+        lin_obs(:,:,l) = emap * emap';
+    end
 end
 
-% overall
-obs_tot = sum(lin_obs,3);
-
-%% storage for statisitics
-% (in this version, we calculate these as we pass over the files)
-
+%% storage for accumulated statisitics
 % overall
 le_counts = zeros(Nevents,Nevents);
 ge_counts = zeros(Nevents,Nevents);
 eq_counts = zeros(Nevents,Nevents);
-
 % by lineage
-le_counts_byclass = zeros(Nevents,Nevents,Nlineages);
-ge_counts_byclass = zeros(Nevents,Nevents,Nlineages);
-eq_counts_byclass = zeros(Nevents,Nevents,Nlineages);
+if Nlineages > 0
+    le_counts_byclass = zeros(Nevents,Nevents,Nlineages);
+    ge_counts_byclass = zeros(Nevents,Nevents,Nlineages);
+    eq_counts_byclass = zeros(Nevents,Nevents,Nlineages);
+end
+
+% chromosome => event mapping
+chrns_e = cell(1,Nchr);
+for c = 1:Nchr
+    chrns_e{c} = find(E.event.chrn == c);
+end
 
 Nperms = 0; % initialize permutation count
 
-%% loop over permutation results files
-
+%% loop over chunk files
 files = dir(fullfile(perm_dir,options.perm_file_mask));
-
 verbose('Reading %d permutation chunks from ''%s''',10,length(files),perm_dir);
-
 for k = 1:length(files)
     verbose(files(k).name,10);
     tic
-    load(fullfile(perm_dir,files(k).name));  % 'idx_cell' cell array, each element NCHR x Nsamples
+    load(fullfile(perm_dir,files(k).name));  % 'idx_cell' cell array, each element Nchr x Nsamples
     npf = length(idx_cell);
-
-    % get number of chromosomes from first chunk of permutations
-    if ~exist('NCHR','var')
-        NCHR = size(idx_cell{1},1);
-        % initialize chromosome-structure storage
-        chrns_a = cell(1,NCHR);
-        chrns_d = cell(1,NCHR);
-        for i = 1:NCHR
-            chrns_a{i} = find(chr_amps==i);
-            chrns_d{i} = find(chr_dels==i);
-        end
-
-    end
 
     % loop over permutations in the chunk
     for i = 1:npf
-        Nperms = Nperms+1;
-        % map chromosome-swap indices to event swaps
-        Bi_a = false(Namps,Nsamples);
-        Bi_d = false(Ndels,Nsamples);
-        % loop over chromosomes in the permutation 
-        for j = 1:NCHR
-            % use permutation indices to rearrange observed events
-            idx_mat = idx_cell{i};
-            % check for old 3D index matrix and convert if necessary
-            if length(size(idx_mat))==3
-                idx_mat = idx_mat(:,:,1);
-            end
-            Bi_a(chrns_a{j},:) = Binary_amps(chrns_a{j},idx_mat(j,:));
-            Bi_d(chrns_d{j},:) = Binary_dels(chrns_d{j},idx_mat(j,:));
+        % count permutation
+        Nperms = Nperms+1;        
+
+        % use permutation indices to rearrange observed events
+        idx_mat = idx_cell{i};
+        % check for old 3D index matrix and convert if necessary
+        if length(size(idx_mat))==3
+            idx_mat = idx_mat(:,:,1);
         end
-        % map events and their co-occurrances
-        emap = double([Bi_a;Bi_d]); % event map for permutation (Nevents X Nsamples)
-        cooc = emap*emap'; % co-ocurrence count for permutation (Nevents X Nevents)
+        % map chromosomes to events one chromosome at a time
+        emap = zeros(Nevents,Nsamples); % allocate storage for expanded event map
+        for c = 1:Nchr
+            emap(chrns_e{c},:) = double(E.dat(chrns_e{c},idx_mat(c,:)));
+        end
+        % add up co-occurences with matrix multiplication
+        cooc = emap * emap';
+        % compare with observed, count equality and each direction of inequality
         le_counts = le_counts + (cooc <= obs_tot);
         ge_counts = ge_counts + (cooc >= obs_tot);
         eq_counts = eq_counts + (cooc == obs_tot);
-        % also accumulate per-lineage le & ge counts
+        % accumulate le & ge counts for lineage subsets
         for l = 1:Nlineages
-            submap = emap(:,samples{l});
-            lcooc = submap*submap';
+            submap = emap(:,lindices{l});
+            lcooc = submap * submap';
             le_counts_byclass(:,:,l) = le_counts_byclass(:,:,l) + (lcooc <= lin_obs(:,:,l));
             ge_counts_byclass(:,:,l) = ge_counts_byclass(:,:,l) + (lcooc >= lin_obs(:,:,l));
             eq_counts_byclass(:,:,l) = eq_counts_byclass(:,:,l) + (lcooc == lin_obs(:,:,l));
         end
     end
     toc
-end
+end % loop over chunk files
 
-%% count events for lineage-specfic correlation and anti-correlation p-values
-
-% event => chromosome map
-chrns = [chr_amps';chr_dels'];
+%% calculate statistics for pairs of events
 
 % calculate number of pairs on different chromosomes
 Npairs = 0;
-for i = 1:length(chrns)
-    Npairs = Npairs + sum(chrns(i) < chrns);
+for c = 1:Nchr
+    Npairs = Npairs + sum(E.event.chrn(c) < E.event.chrn);
 end
 
 pscnt = options.pcount;
@@ -160,7 +155,7 @@ pscnt = options.pcount;
 % allocate storage for lineage-specific p-values
 verbose('calculating p-values for lineage specific co-occurrences',10);
 tic
-regs_idx = zeros(Npairs,2);            % list of unique event pair indices
+pairs_idx = zeros(Npairs,2);            % list of unique event pair indices
 p_list_corr = zeros(Npairs,Nlineages); % correlation p-values per lineage
 p_list_anti = zeros(Npairs,Nlineages); % anti-correlation p-values per lineage
 for l = 1:Nlineages
@@ -169,9 +164,10 @@ for l = 1:Nlineages
     p_list_apow = zeros(Npairs,1);  % min fisher exact p-value for anti-correlation
    for i = 1:Nevents
         for j = i+1:Nevents
-            if chrns(i)~=chrns(j)
+            if E.event.chrn(i) ~= E.event.chrn(j)
                 % maximum power calculation
-                [p_list_cpow(s),p_list_apow(s)] = max_fish_power(length(samples{l}), sum(Binary(i,samples{l})), sum(Binary(j,samples{l}))); 
+                lx = lindices{l}; % indices of samples in this lineage
+                [p_list_cpow(s),p_list_apow(s)] = max_fish_power(length(lx), sum(E.dat(i,lx)), sum(E.dat(j,lx))); 
                 % calculate p-values for both correlation and anti-correlation
                 if options.split_eq
                     % historical
@@ -182,17 +178,19 @@ for l = 1:Nlineages
                     p_list_corr(s,l) = (ge_counts_byclass(i,j,l) + pscnt) / (Nperms + pscnt);
                     p_list_anti(s,l) = (le_counts_byclass(i,j,l) + pscnt) / (Nperms + pscnt);
                 end
-                regs_idx(s,:) = [i,j];
-                s = s+1;
+                pairs_idx(s,:) = [i,j];
+                s = s + 1;
             end
         end
     end
-    if l <= length(options.lineage_out) && ~isempty(options.lineage_out{l})
-        save_pair_pvalues(regs,[p_list_anti(:,l),regs_idx,p_list_apow],...
-            [save_dir,'anticorr_pair.',options.lineage_out{l},ext,'.txt'],1,options.sig_thresh,options.power_thresh);
-        save_pair_pvalues(regs,[p_list_corr(:,l),regs_idx,p_list_cpow],...
-            [save_dir,'correlate_pair.',options.lineage_out{l},ext,'.txt'],1,options.sig_thresh,options.power_thresh);
-    end
+    %if l <= length(options.lineage_out) && ~isempty(options.lineage_out{l})
+    output_pair_p(E.event,[p_list_anti(:,l),pairs_idx,p_list_apow],...
+                  fullfile(save_dir,['anticorr_pair.',linames{l},ext,'.txt']),...
+                  1,options.sig_thresh,options.power_thresh);
+    output_pair_p(E.event,[p_list_corr(:,l),pairs_idx,p_list_cpow],...
+                  fullfile(save_dir,['correlate_pair.',linames{l},ext,'.txt']),...
+                  1,options.sig_thresh,options.power_thresh);
+    %end
 end
 toc
 
@@ -202,7 +200,7 @@ toc
 verbose('counting overall event co-occurrences',10)
 
 % allocate storage for lineage-specific p-values
-regs_idx = zeros(Npairs,2);   % peak indices
+pairs_idx = zeros(Npairs,2);   % peak indices
 p_corr = zeros(Npairs,1);
 p_anti = zeros(Npairs,1);
 p_cpow = zeros(Npairs,1);  % min fisher exact p-value for correlation
@@ -213,9 +211,9 @@ tic
 s = 1; % pair index
 for i = 1:Nevents-1
     for j = i+1:Nevents
-        if chrns(i)~=chrns(j)
+        if E.event.chrn(i) ~= E.event.chrn(j)
             % maximum power calculation
-            [p_cpow(s),p_apow(s)] = max_fish_power(Nsamples,sum(Binary(i,:)),sum(Binary(j,:)));
+            [p_cpow(s),p_apow(s)] = max_fish_power(Nsamples,sum(E.dat(i,:)),sum(E.dat(j,:)));
             % p value calculations
             if options.split_eq
                 p_corr(s) = (ge_counts(i,j) - eq_counts(i,j)/2 + pscnt) / (Nperms + pscnt);
@@ -225,7 +223,7 @@ for i = 1:Nevents-1
                 p_anti(s) = (le_counts(i,j) + pscnt) / (Nperms + pscnt);
             end
             % save pair index 
-            regs_idx(s,:) = [i,j];
+            pairs_idx(s,:) = [i,j];
             s = s+1;
         end
     end
@@ -236,17 +234,18 @@ toc
 verbose('saving results',10);toc
 
 % save binaries for forensics
-save(fullfile(save_dir,['pair_results',ext,'.mat']),'regs_idx','p_corr','p_anti','p_cpow','p_apow');
+save(fullfile(save_dir,['pair_results',ext,'.mat']),'pairs_idx','p_corr','p_anti','p_cpow','p_apow');
 %!save(fullfile(save_dir,['pair_perm_tot',ext,'.mat'],'perm_tot');
 save(fullfile(save_dir,['pair_obs_tot',ext,'.mat']),'obs_tot');
 
-% save significance results files
-save_pair_pvalues(regs,[p_anti,regs_idx,p_apow],...
+% save overall significance results files
+output_pair_p(E.event,[p_anti,pairs_idx,p_apow],...
                   fullfile(save_dir,['anticorr_pair',ext,'.txt']),...
                   1,options.sig_thresh,options.power_thresh);
-save_pair_pvalues(regs,[p_corr,regs_idx,p_cpow],...
+output_pair_p(E.event,[p_corr,pairs_idx,p_cpow],...
                   fullfile(save_dir,['correlate_pair',ext,'.txt']),...
                   1,options.sig_thresh,options.power_thresh);
 
-
+% save function WS for debugging and downstream analyses
+save(fullfile(save_dir,['analyze_pairs2_ws',ext,'.mat']));
 

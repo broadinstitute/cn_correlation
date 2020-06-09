@@ -15,8 +15,10 @@ function H = create_xrupt(D,margs,pcx);
     H.sdesc = D.sdesc;
     H.margs = margs;
     H.pcx = pcx;
-    H.pcname = cell(size(pcx));
+    H.pcname = extract_pcname(D,pcx);
 
+%{
+    H.pcname = cell(size(pcx));
     %% create class names
     % loop over permutation classes
     for i=1:length(pcx);
@@ -35,6 +37,7 @@ function H = create_xrupt(D,margs,pcx);
         end
         H.pcname{i} = class_name;
     end
+ %}
 
     % create chromosome names
     ucx = unique(D.chrn);
