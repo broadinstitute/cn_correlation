@@ -22,6 +22,10 @@ https://svnrepos/CancerGenomeAnalysis/trunk/matlab/snp/correlation. It generally
 |---|---|---|---|---|
 |**chr1**| a<sub>11</sub> / d<sub>11</sub> | a<sub>12</sub> / d<sub>12</sub> |...| a<sub>1N</sub> / d<sub>1N</sub> |
 |**chr2**| a<sub>21</sub> / d<sub>21</sub> | a<sub>22</sub> / d<sub>22</sub> |...| a<sub>2N</sub> / d<sub>2N</sub> |
+|**chr3**| a<sub>31</sub> / d<sub>31</sub> | a<sub>32</sub> / d<sub>32</sub> |...| a<sub>3N</sub> / d<sub>3N</sub> |
+|**chr4**| a<sub>41</sub> / d<sub>41</sub> | a<sub>42</sub> / d<sub>42</sub> |...| a<sub>4N</sub> / d<sub>4N</sub> |
+|**chr5**| a<sub>51</sub> / d<sub>51</sub> | a<sub>52</sub> / d<sub>52</sub> |...| a<sub>5N</sub> / d<sub>5N</sub> |
+|**chr6**| a<sub>61</sub> / d<sub>61</sub> | a<sub>62</sub> / d<sub>62</sub> |...| a<sub>6N</sub> / d<sub>6N</sub> |
 |**...**|...|...|...|...|
 |**chrX**| a<sub>X1</sub> / d<sub>X1</sub> | a<sub>X2</sub> / d<sub>X2</sub> |...| a<sub>XN</sub> / d<sub>XN</sub> |
 |**genome**| A<sub>1</sub> / D<sub>1</sub> | A<sub>2</sub> / D<sub>2</sub> |...|A<sub>N</sub> / D<sub>N</sub> |
