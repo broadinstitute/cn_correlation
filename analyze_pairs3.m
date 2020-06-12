@@ -15,25 +15,31 @@ options = impose_default_value(options,'power_thresh',0.1); % cutoff for minimum
 options = impose_default_value(options,'split_eq',false);   % set to split observed===permuted between tail and body 
 options = impose_default_value(options,'pcount',1);         % pseudo count (1 or 0) 
 options = impose_default_value(options,'perm_file_mask','idx_cell*');% set to split obs==permuted between tail and body 
+options = impose_default_value(options,'lineage_out',{});
 options = impose_default_value(options,'analyze_lineages',false);
 options = impose_default_value(options,'lineage_out',E.pcname);    % list of lineage subsets to analyze
 
 options
 
 % input warnings
-if options.split_eq
-     warning('The ''split_eq'' way of calculating P-values is deprecated.');
-end
+%!if options.split_eq
+%!     warning('The ''split_eq'' way of calculating P-values is deprecated.');
+%!end
 if options.pcount == 0
      warning('Not using a pseudocount is deprecated.');
 end
 if options.analyze_lineages && ~isempty(options.lineage_out)
-    unklin = ~ismember(options.lineage_out,E.pcname);
-    if any(unklin)
-        warning(strjoin({'unknown lineages requested:',E.pcname{unklin}}));
-        if all(unklin)
-            warning('canceling lineage analysis');
-            options.analyze_lineages = false;
+    if isempty(E.pcx)
+        warning('no lineage info in event map, canceling lineage analysis');
+        options.analyze_lineages = false;
+    else
+        unklin = ~ismember(options.lineage_out,E.pcname);
+        if any(unklin)
+            warning(strjoin({'unknown lineages requested:',options.lineage_out{unklin}}));
+            if all(unklin)
+                warning('canceling lineage analysis');
+                options.analyze_lineages = false;
+            end
         end
     end
 end
@@ -80,6 +86,11 @@ if Nlineages > 0
 end
 
 %% storage for accumulated statisitics
+%
+% This version of the analysis aggregates a histogram of co-oocurrence counts
+% for each each event pair.
+%
+
 % overall
 % use Nevents x Nevents array of histograms
 maxcount = max(sum(E.dat,2));  % maximum possible co-occurrence
@@ -92,7 +103,7 @@ if Nlineages > 0
         cochist_byclass{l} = zeros(Nevents,Nevents,maxcount+1);
     end
 end
-
+%%%%%
 % chromosome => event mapping
 chrns_e = cell(1,Nchr);
 for c = 1:Nchr
@@ -101,10 +112,15 @@ end
 
 Nperms = 0; % initialize permutation count
 
-%% loop over chunk files
+%% chunk processing
+
 files = dir(fullfile(perm_dir,options.perm_file_mask));
-verbose('Reading %d permutation chunks from ''%s''',10,length(files),perm_dir);
-for k = 1:length(files)
+Nfiles = length(files);
+verbose('Reading %d permutation chunks from ''%s''',10,Nfiles,perm_dir);
+if ~Nfiles
+    error('No permutation data to process');
+end
+for k = 1:Nfiles
     verbose(files(k).name,10);
     tic
     load(fullfile(perm_dir,files(k).name));  % 'idx_cell' cell array, each element Nchr x Nsamples
@@ -130,6 +146,7 @@ for k = 1:length(files)
         end
         % add up co-occurences with matrix multiplication
         cooc = emap * emap';
+        %%%%% begin method fork
         % update histograms
         cochist = count_binsum(cochist,cooc);
 
@@ -139,6 +156,7 @@ for k = 1:length(files)
             lcooc = submap * submap';
             cochist_byclass{l} = count_binsum(cochist_byclass{l},lcooc);
         end
+        %%%%% end method fork
     end
     toc
 end % loop over chunk files
@@ -160,9 +178,10 @@ pairs_idx = zeros(Npairs,2);            % list of unique event pair indices
 if Nlineages > 0
     p_list_corr = zeros(Npairs,Nlineages); % correlation p-values per lineage
     p_list_anti = zeros(Npairs,Nlineages); % anti-correlation p-values per lineage
+    
+    %%%%% begin method fork
 
-    %% calculate by-lineage ge/le/eq values
-
+    % calculate by-lineage ge/le/eq values
     le_counts_byclass = zeros(Nevents,Nevents,Nlineages);
     ge_counts_byclass = zeros(Nevents,Nevents,Nlineages);
     eq_counts_byclass = zeros(Nevents,Nevents,Nlineages);
@@ -181,11 +200,11 @@ if Nlineages > 0
        end
     end
     toc
+    %%%%% end method fork
 
     verbose('calculating lineage-specific p-values',10);
     tic
     for l = 1:Nlineages
-        disp(l)
         s = 1; % pair index
         p_list_cpow = zeros(Npairs,1);  % min fisher exact p-value for correlation
         p_list_apow = zeros(Npairs,1);  % min fisher exact p-value for anti-correlation
@@ -211,6 +230,7 @@ if Nlineages > 0
                 end
             end
         end
+
         % output correlation/anticorrelation tables for selected lineages
         output_pair_p(E.event,[p_list_anti(:,l),pairs_idx,p_list_apow],...
                       fullfile(save_dir,['anticorr_pair.',linames{l},ext,'.txt']),...
@@ -232,6 +252,8 @@ p_cpow = zeros(Npairs,1);  % min fisher exact p-value for correlation
 p_apow = zeros(Npairs,1);  % min fisher exact p-value for anti-correlation
 % calculate p-values
 
+%%%%% begin method fork
+
 %% calculate counts for p-values
 verbose('calculating overall le/ge/eq counts',10);
 tic
@@ -251,9 +273,10 @@ for i = 1:Nevents-1
 end
 toc
 
+%%%%% end method fork
+
 verbose('calculating overall co-occurrences p-values',10);
 tic
-
 s = 1; % pair index
 for i = 1:Nevents-1
     for j = i+1:Nevents

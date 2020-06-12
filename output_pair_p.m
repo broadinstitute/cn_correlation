@@ -17,10 +17,10 @@ function output_pair_p(events,list,filename,p_to_q,sig_thresh,power_thresh)
     end
 
     % calculate index by significance for each peak within event type (GISTIC peaks output order)
-    %!sigindex = [grade(grade([regs{1}.resid_qv])), grade(grade([regs{2}.resid_qv]))+length(regs{1})];
+
     amps = events.type == 1;
     dels = events.type == 2;
-    sigindex = [grade(grade(events.resid_qv(amps)')), grade(grade(events.resid_qv(dels)')) + sum(amps)];
+    %! sigindex = [grade(grade(events.resid_qv(amps)')), grade(grade(events.resid_qv(dels)')) + sum(amps)];
 
     % optionally filter list to keep only powered hypotheses
     if power_thresh < 1 && size(list,2) > 3
@@ -50,18 +50,16 @@ function output_pair_p(events,list,filename,p_to_q,sig_thresh,power_thresh)
 
     % write output
     output_cols = { ...
-        {'index1',sigindex(siglist(:,2))},...
-        {'index2',sigindex(siglist(:,3))},...
+        {'event_1_label',labels(siglist(:,2))},...
+        {'event_2_label',labels(siglist(:,3))},...
         power_column{:},...
         {'p_value',siglist(:,1)},...
-        {'q_value',q},...
-        {'event_1_label',labels(siglist(:,2))},...
-        {'event_2_label',labels(siglist(:,3))} ...
+        {'q_value',q}...
                   };
     write_filtered_tabcols(filename,[],output_cols{:});
 end
 
-function O=grade(val)
-    [~,O] = sort(val);
-end
+%!function O=grade(val)
+%!    [~,O] = sort(val);
+%!end
 
