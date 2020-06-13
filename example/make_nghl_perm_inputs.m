@@ -1,9 +1,8 @@
-% script to create "low level" disruption profile and event map files
+% script to create "high level" disruption profile and event map files
 % from 2013 GISTIC results used in Pan-Cancer 2013 Nature Genetics paper
 
 clear
 set_verbose_level(40)
-
 
 % input files
 gistic_peaks_file = fullfile(pwd,'peak_regs.blen0.5_narmp.mat'); % peak results from GISTIC
@@ -53,16 +52,17 @@ for i = 1:length(D.sdesc)
     D.sis(i).disease = [D.sis(i).disease,'_',D.sis(i).subtype];
 end
 
-% set the options for low-level analysis
+% set the options for preparing high-level analysis
 options = struct;
-options.event_thresh = 0;           % 0.95 for high-level
-options.hilevel = false;            % true for high level
-options.minclass_samples = 17;      % 15 for high-level
-options.t_amp = 0.3;                % 0.2 for high-level
-options.t_del = 0.3;                % 0.2 for high level
-options.broad_len_cutoff = 0.50;    % 0.55 for high-level
-options.max_disruption = [Inf,Inf]; % [160000,600000] for high level
+options.hilevel = true;             % false for low-level
+options.event_thresh = 0.95;        % 0 for high-level
+options.minclass_samples = 17;      % 17 for low-level
+options.t_amp = 0.2;                % 0.3 for low-level
+options.t_del = 0.2;                % 0.3 for low-level
+options.broad_len_cutoff = 0.55;    % 0.50 for low-level
+options.max_disruption = [160000,600000];  % [Inf,Inf] for low-level 
 options.permclass_sisfield = 'disease';
+
 
 % prepare data for permutations
 [D,margs_sort,pcindex,Binary_amps,Binary_dels] = corrperm_gistic_prep(D,regs,options);
@@ -71,10 +71,10 @@ options.permclass_sisfield = 'disease';
 
 % create and save disruption profile
 H = create_gistic_xrupt(D,margs_sort,pcindex);
-save(fullfile(pwd,'ngll.xrupt'),'H');
+save(fullfile(pwd,'nghl.xrupt'),'H');
 %!export_xrupt(H,fullfile(pwd,'ngll.xrupt.txt'));
 
 % create and save event map 
 E = create_gistic_emap(D,regs,pcindex,Binary_amps,Binary_dels);
-save(fullfile(pwd,'ngll.emap'),'E');
+save(fullfile(pwd,'nghl.emap'),'E');
 %!export_emap(E,fullfile(pwd,'ngll.evif.txt'),fullfile(pwd,'ngll.ecall.txt'));
