@@ -12,7 +12,7 @@ function E = load_emap(fname,varname)
 
     nms = fieldnames(e);
     E = getfield(e,nms{1});
-    % vaidate
+    % validate
     assert(isfield(E,'sdesc'));
     assert(isfield(E,'dat'));
     assert(isfield(E,'event'));
