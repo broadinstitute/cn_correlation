@@ -1,13 +1,11 @@
-function [D,margs_sort,new_samples] = corrperm_prep_gg(D,regs,work_dir,options,rg)
+function [D,margs_sort,new_samples,Binary_amps,Binary_dels] = corrperm_genegistic_prep(D,regs,options,rg)
 % prepare inputs for permutation tests: module level function
 %
 %   create lineage "bins"
+%   calculate disruption
 %   call events
-%   save outputs to work_dir
+%   NO LONGER save outputs to work_dir
 %
-% derived from merger of functions 
-% /xchip/gistic/Travis/Correlations/LSF2/0816/chrm_metro_restart_lsf2_lineage
-% /xchip/gistic/Travis/Correlations/LSF2/0816/chrm_metro_restart_lsf2_lineage_hl
 
 %% process optional parameters
 if ~exist('options','var') || isempty(options)
@@ -26,10 +24,10 @@ options = impose_default_value(options,'max_disruption',[Inf,Inf]);
 % get number of chromosomes from D
 Nchr = max(D.chrn);
 
-% create working directory if necessary
-if ~exist(work_dir,'dir')
-    mkdir(work_dir)
-end
+%! create working directory if necessary
+%!if ~exist(work_dir,'dir')
+%!    mkdir(work_dir)
+%!end
 
 %% calculate disruption score for each chromosome/sample/SCNA type
 verbose('scoring observed marginals',20)
@@ -116,8 +114,7 @@ new_samples = samples;  % init reordered permutation class indices
 % loop over classes
 for i = 1:length(samples)
     [~,I] = sort(sum(marg(samples{i},:),2));
-    new_samples{i} = sort(samples{i}(I)); %!
-%!  new_samples{i} = samples{i}(I);
+    new_samples{i} = sort(samples{i}(I));
     order(samples{i}) = order(samples{i}(I));
 end
 % sort the marginals
@@ -134,18 +131,20 @@ amps = [regs{1}.peak];
 dels = [regs{2}.peak]; 
 
 params.broad_len_cutoff = options.broad_len_cutoff;
-[ Binary,Binary_amps,Binary_dels ] = score_cooccurance(D.Qs,amps,dels,params,...
+[ ~,Binary_amps,Binary_dels ] = score_cooccurance(D.Qs,amps,dels,params,...
                                             options.hilevel,options.event_thresh);
 
 %% save input files to the permutation/evaluation stages in working directory
-verbose('saving permutation input files.',20)
-
+%!verbose('saving permutation input files.',20)
 % inputs to permutation engine
-save(fullfile(work_dir,'new_samples.mat'),'new_samples');
-save(fullfile(work_dir,'margs.mat'),'margs_sort');
+%!save(fullfile(work_dir,'new_samples.mat'),'new_samples');
+%!save(fullfile(work_dir,'margs.mat'),'margs_sort');
 
 % inputs to evaluator
-save(fullfile(work_dir,'Binary_amps.mat'),'Binary_amps');
-save(fullfile(work_dir,'Binary_dels.mat'),'Binary_dels');
-save(fullfile(work_dir,'D.mat'),'D');
-save(fullfile(work_dir,'peak_regs.mat'),'regs');
+%!save(fullfile(work_dir,'Binary_amps.mat'),'Binary_amps');
+%!save(fullfile(work_dir,'Binary_dels.mat'),'Binary_dels');
+%!save(fullfile(work_dir,'D.mat'),'D');
+%!save(fullfile(work_dir,'peak_regs.mat'),'regs');
+
+end % function
+
