@@ -38,7 +38,6 @@ else
     seed = randseed();
 end
 fprintf('RNG seed: %d\n',seed); 
-save(fullfile(perm_dir,'randseed.mat'));
 
 % do permutations
 [idx_cell,stat_finals,stats] = ampdel_tempering(H,iters,perm_opts);
@@ -48,7 +47,7 @@ fprintf('saving output files\n');
 save(fullfile(perm_dir,['idx_cell.',chunk_id,'.mat']),'idx_cell');
 save(fullfile(perm_dir,['stat_finals.',chunk_id,'.mat']),'stat_finals');
 save(fullfile(perm_dir,['stats.',chunk_id,'.mat']),'stats');
-fprintf('annealing_permutations module complete for chunk\n');
+fprintf('ampdel tempering module complete for chunk\n');
 
 end % function
 

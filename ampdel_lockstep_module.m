@@ -1,4 +1,4 @@
-function corrperm_ampdel_lockstep_module(ref_dir,perm_dir,chunk_id,iters,varargin)
+function ampdel_lockstep_module(ref_dir,perm_dir,chunk_id,iters,varargin)
 %AMPDEL_LOCKSTEP__MODULE - executable wrapper function for ampdel_lockstep() function
 %
 %   ampdel_lockstep_module(REF_DIR,PERM_DIR,CHUNK_ID,ITERS,SEED)
@@ -12,9 +12,8 @@ function corrperm_ampdel_lockstep_module(ref_dir,perm_dir,chunk_id,iters,varargi
 
 % load input data from files
 fprintf('loading input files\n')
-load(fullfile(ref_dir,'margs.mat'));       % 'margs_sort' chromosome disruption values (chromosomes X samples X amp/del)
-load(fullfile(ref_dir,'new_samples.mat')); % 'new_samples' cell array of permutation class indices
-load(fullfile(ref_dir,'permute_options.mat')); % 'opts' struct for passing permutation options
+load(fullfile(perm_dir,'H.mat')); % 'H' struct disruption samples
+load(fullfile(perm_dir,'perm_opts.mat')); % 'perm_opts' struct for passing permutation options
 
 % convert iteration count argument to number
 if exist('iters','var') && ~isempty(iters)
@@ -41,13 +40,13 @@ end
 fprintf('RNG seed: %d\n',seed); 
 
 % do permutations
-[rand_margs_cell,idx_cell,stat_finals] = corrperm_ampdel_lockstep(margs_sort,new_samples,iters,opts);
+[idx_cell,stat_finals,stats] = ampdel_lockstep(H,iters,perm_opts);
 
 % save output to files
 fprintf('saving output files\n')
 save(fullfile(perm_dir,['idx_cell.',chunk_id,'.mat']),'idx_cell')
-save(fullfile(perm_dir,['stats.',chunk_id,'.mat']),'stats')
 save(fullfile(perm_dir,['stat_finals.',chunk_id,'.mat']),'stat_finals')
-fprintf('annealing_permutations module complete\n')
+save(fullfile(perm_dir,['stats.',chunk_id,'.mat']),'stats')
+fprintf('ampdel lockstep module complete for chunk\n')
 
 end % function

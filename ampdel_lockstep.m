@@ -1,17 +1,15 @@
-function [rand_margs_cell,idx_cell,stat_finals,stats] = corrperm_ampdel_lockstep(margs,samples,iters,opts,varargin)
+function [idx_cell,stat_finals,stats] = ampdel_lockstep(H,iters,opts,varargin)
 %CORRPERM_AMPDEL_LOCKSTEP iterate over rounds of simulated tempered annealing
 %
-%   [RAND_MARGS_CELL,IDX_CELL,STATS] = 
-%            corrperm_ampdel_lockstep(MARGS,IDX_MAT,SAMPLES,ITERS,OPTS)
+%   [IDX_CELL,STAT_FINALS,STATS] = ampdel_lockstep(H,SAMPLES,ITERS,OPTS)
 %
-% MARGS are the observed marginals for each chromosome of each sample for
-% every SCNA type (Nchr X Nsamples X amp|del). IDX_MAT is a set of input
-% permutation indices.
-
+% H is the disruption profile structure of the data. ITERS is the number of trials.
+% OPTS are permutation options.
+%
 % returns three cell arrays with an element for each permutation:
-% RAND_MARGS_CELL are the permutation marginals (each element disruption sum, 
-% Nchr X Nsamples X amp|del); IDX_CELL are the permutaion indices (integers, 
-% Nchr X Nsamples); STATS are statistics (loosely defined).
+% IDX_CELL contains permutation indices for each run (integers, Nchr X Nsamples)
+% STAT_FINALS contains containing error vectors {amp|del} for each trial
+% STATS contains structs of loosely defined statistics for analyzing the runs
 
 
 % optional parameter processing
@@ -23,13 +21,13 @@ opts = impose_default_value(opts,'binminbin',0);
 verbose('- initiating permutation run of %d trials -',10,iters);
 
 % number of chromosomes
-[Nchr,Nsamples,Nalt] = size(margs);
+[Nchr,Nsamples,Nalt] = size(H.margs);
 
 % find minimum non-zero disruption values for each chromosome for amps and dels
 min_bin = nan(Nchr,2);
 for i = 1:Nchr      % loop over chromosomes
     for j = 1:Nalt  % amp/del
-        test = margs(i,:,j);
+        test = H.margs(i,:,j);
         test(test==0) = Inf;
         min_bin(i,j) = min(test) + opts.minbinmin;
     end
@@ -40,7 +38,7 @@ stats = cell(1,iters);
 stat_finals = cell(1,iters);
 idx_cell = cell(1,iters);
 
-margs1 = zeros(size(margs));
+margs1 = zeros(size(H.margs));
 idx_mat0 = repmat(1:Nsamples,Nchr,1);
 idx_mat1 = repmat(1:Nsamples,Nchr,1);
 %% iterate over specified number of permutations
@@ -49,11 +47,11 @@ idx_mat1 = repmat(1:Nsamples,Nchr,1);
 tic
 for d = 1:iters
     % randomly permute sample labels within permutation classes
-    for k = 1:length(samples)   % loop over permutation classses
+    for k = 1:length(H.pcx)   % loop over permutation classses
         for j = 1:Nchr              % loop over chromosomes  !!!HUMGEN
-            r = randperm(length(samples{k}));
-            margs1(j,samples{k},:) = margs(j,samples{k}(r),:);
-            idx_mat1(j,samples{k}) = idx_mat0(j,samples{k}(r));
+            r = randperm(length(H.pcx{k}));
+            margs1(j,H.pcx{k},:) = H.margs(j,H.pcx{k}(r),:);
+            idx_mat1(j,H.pcx{k}) = idx_mat0(j,H.pcx{k}(r));
         end
     end
     
@@ -61,15 +59,15 @@ for d = 1:iters
     rand_marg = squeeze(sum(sum(margs1,1),3)); % randomized sample marginals
     rand_margs = NaN(size(margs1));
     idx_mat_s = zeros(size(idx_mat1));
-    for i = 1:length(samples)
-        [~,I1] = sort(rand_marg(samples{i}));
-        rand_margs(:,samples{i},:) = margs1(:,samples{i}(I1),:);
-        idx_mat_s(:,samples{i}) = idx_mat1(:,samples{i}(I1));
+    for i = 1:length(H.pcx)
+        [~,I1] = sort(rand_marg(H.pcx{i}));
+        rand_margs(:,H.pcx{i},:) = margs1(:,H.pcx{i}(I1),:);
+        idx_mat_s(:,H.pcx{i}) = idx_mat1(:,H.pcx{i}(I1));
     end
     
     % run the annealing schedule
     [idx_mat2,rand_margs,stat_final,stat] = corrperm_lockstep_schedule(...
-                        margs,rand_margs,idx_mat_s,[10,10],samples,min_bin,opts);
+                        H.margs,rand_margs,idx_mat_s,[10,10],H.pcx,min_bin,opts);
 
     rand_margs_cell{d} = rand_margs ;
     stats{d} = stat;
