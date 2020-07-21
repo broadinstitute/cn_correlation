@@ -165,8 +165,8 @@ end % loop over chunk files
 
 % calculate number of pairs on different chromosomes
 Npairs = 0;
-for c = 1:Nchr
-    Npairs = Npairs + sum(E.event.chrn(c) < E.event.chrn);
+for i = 1:Nevents
+    Npairs = Npairs + sum(E.event.chrn(i) < E.event.chrn);
 end
 
 pscnt = options.pcount;
