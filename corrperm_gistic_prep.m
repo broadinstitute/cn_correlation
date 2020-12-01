@@ -59,6 +59,8 @@ end
 Nsamples = size(D.dat,2);
 margs = zeros(Nchr,Nsamples,2);
 Dchrn = SegArray(D.chrn);
+%%%%%
+%%%%%
 fields = {'amp','del'};
 for i = 1:Nchr
     idx = Dchrn==i;

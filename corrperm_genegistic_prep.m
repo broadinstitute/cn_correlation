@@ -58,8 +58,8 @@ end
 Nsamples = size(D.dat,2);
 margs = zeros(Nchr,Nsamples,2);
 Dchrn = SegArray(D.chrn);
-
-% score using gene-level events
+%%%%%
+%% score chromosome disruption using gene-level events
 F = D;
 F.dat = scores1.amp - scores1.del;
 % first collapse focal data to genes
@@ -73,7 +73,7 @@ for j = 1:length(G.gdesc)
     gene_footprint = SegArray.fromSegments(gsnps(1),gsnps(end),1,true,false,size(score_gg,1),1);
     score_gg(gene_footprint,:) = min(score_gg(gene_footprint,:),repmat(SegArray(G.dat(j,:)),length(gsnps),1));
 end
-
+%%%%%
 fields = {'amp','del'};
 for i = 1:Nchr
     idx = Dchrn==i;

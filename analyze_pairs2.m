@@ -54,7 +54,7 @@ if ~exist(save_dir,'dir')
     mkdir(save_dir)
 end
 
-% process lineage filter
+% initialize lineage breakdown working variables
 lindices = {};
 linames = {};
 if options.analyze_lineages
