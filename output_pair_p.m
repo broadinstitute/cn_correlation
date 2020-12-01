@@ -4,9 +4,9 @@ function output_pair_p(events,list,filename,p_to_q,sig_thresh,power_thresh)
 %   output_pair_p(EVENTS,LIST,FILENAME,P_TO_Q,SIG_THRESH)
 %
 % EVENTS - struct of per-event arrays, relevant fields are 'name' and 'resid_qv'
-% LIST - Npairs X 3 matrix: column 1 is p-value, cols 2 and 3 are peak
-%        indices corresponding to EVENT. An optional
-%        fourth column may hold the p-value for a hypothesis power filter.
+% LIST - Npairs X 3 matrix: column 1 is p-value, cols 2 and 3 are event
+%        indices corresponding to EVENT. An optional fourth column
+%        may hold the p-value for a hypothesis power filter.
 % FILENAME - name of output file
 % P_TO_Q - true to convert p-values to q-values, false to leave as p-values
 % SIG_THRESH - uppper limit of p- or q-value to include pair in putput
@@ -18,8 +18,8 @@ function output_pair_p(events,list,filename,p_to_q,sig_thresh,power_thresh)
 
     % calculate index by significance for each peak within event type (GISTIC peaks output order)
 
-    amps = events.type == 1;
-    dels = events.type == 2;
+    %! amps = events.type == 1;
+    %! dels = events.type == 2;
     %! sigindex = [grade(grade(events.resid_qv(amps)')), grade(grade(events.resid_qv(dels)')) + sum(amps)];
 
     % optionally filter list to keep only powered hypotheses
