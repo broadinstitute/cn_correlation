@@ -5,22 +5,15 @@ function E = load_emap(fname,varname)
 %
 % 
     if exist('varname','var')
-        e = load(fname,varname); %!!! does this work? (from GISTIC load_D)
+        e = load(fname,varname,'-mat'); %!!! does this even work? (from GISTIC load_D)
     else
-        e = load(fname);
+        e = load(fname,'-mat');
     end
 
     nms = fieldnames(e);
     E = getfield(e,nms{1});
-    % validate
-    assert(isfield(E,'sdesc'));
-    assert(isfield(E,'dat'));
-    assert(isfield(E,'event'));
-    assert(isfield(E.event,'name'));
-    assert(isfield(E.event,'type'));
-    assert(isfield(E.event,'chrn'));
-    %@!!! validate sizes
-
+    validate_emap(E);
+    
     % de-sparse the matrix
     E.dat = full(E.dat);
 end
