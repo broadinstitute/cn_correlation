@@ -88,16 +88,17 @@ function E = import_emap(evif_fname,ecall_fname)
     hdr = regexp(hdrline,dlm,'split');
     Ncols = length(hdr);
     if Ncols == 0
-        error('event.map error: empty file');    
+        error('event.call error: empty file');    
     end
     if Ncols < 2
         error('event.call error: no events')
     end
     % sample column
     try_name = strtrim(hdr(1));
-    if ~strcmp(try_name,'sample')
-        error('event.call error: first column of event map must be ''sample''.');
+    if ~strcmp(lower(try_name),'sample')
+        error('event.call error: first column of event call table must be ''sample''.');
     end
+    %{
     % optional lineage column
     try_lineage = strtrim(hdr(2));
     if strcmp(try_lineage,'lineage')
@@ -114,6 +115,9 @@ function E = import_emap(evif_fname,ecall_fname)
             error('event.call error: column 2 of event map must be either an event.info name or ''lineage''.');
         end
     end
+    %}
+    Nevents = Ncols-1;
+    called_events = strtrim(hdr(2:end));
 
     % discard event.info that does not match event.calls
     efields = fieldnames(E.event);
@@ -159,7 +163,8 @@ function E = import_emap(evif_fname,ecall_fname)
     end
 
 
-    fmstr = ['%s',lin_fmt,repmat(' %d',1,Nevents),lf_char];
+    fmstr = ['%s',repmat(' %d',1,Nevents),lf_char];
+    %!    fmstr = ['%s',lin_fmt,repmat(' %d',1,Nevents),lf_char];
     try
         if pcunix_text
             cols = textscan(fid,fmstr,'ReturnOnError',0,'Delimiter',dlm,'WhiteSpace','\r');
@@ -177,10 +182,15 @@ function E = import_emap(evif_fname,ecall_fname)
         error('event.call error: missing event data');
     end
 
-    % sample column
-    E.sdesc = strtrim(cols{1});
+    % sample identifier column
+    E.sample = struct('id',cols{1});
+    %! E.sdesc = strtrim(cols{1})
+    if length(sample.id) ~= length(unique(sample.id))
+        error('duplicate sample identifiers detected in event calls')
+    end
     % optional lineage column
-    Nsamples = length(E.sdesc);
+    Nsamples = length(E.sample.id);
+    %{    
     if have_lineage
         lintext = strtrim(cols{2});
         E.pcname = unique(lintext,'stable')';
@@ -189,11 +199,12 @@ function E = import_emap(evif_fname,ecall_fname)
         E.pcx = {};
         E.pcname = {};
     end
-
+    %}
     % data columns
     E.dat = false(Nevents,Nsamples);
     for i = 1:Nevents
-        E.dat(i,:) = 0 ~= cols{i+have_lineage+1};
+        E.dat(i,:) = 0 ~= cols{i+1};
+        %! E.dat(i,:) = 0 ~= cols{i+have_lineage+1};
     end
     E.dat = logical(E.dat);
 

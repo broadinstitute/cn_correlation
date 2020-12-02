@@ -13,7 +13,7 @@ function E = create_gistic_emap(D,regs,pcx,Binary_amps,Binary_dels);
 %
     % save event map for analysis as a single package
     E = struct;
-    E.sdesc = D.sdesc;
+    E.sample = struct('id',D.sdesc);
 
     % event sub-structure
     E.event = struct;

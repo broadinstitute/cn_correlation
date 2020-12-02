@@ -76,5 +76,5 @@ save(fullfile(pwd,'ngll.xrupt'),'H');
 
 % create and save event map 
 E = create_gistic_emap(D,regs,pcindex,Binary_amps,Binary_dels);
-save(fullfile(pwd,'ngll.emap'),'E');
+save_emap(E,'ngll.emap');
 %!export_emap(E,fullfile(pwd,'ngll.evif.txt'),fullfile(pwd,'ngll.ecall.txt'));
