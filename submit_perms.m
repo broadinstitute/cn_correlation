@@ -71,7 +71,7 @@ for j = 1:Njobs
     chunk_id = sprintf('cycle%03d',j);  % chunk identifier extension string
     seed = num2str(randi(2^32-1));   % 32-bit chunk RNG seed string
     % Create a nested command to build a command to submit a job to a multi-processing environment using unix.
-    % The first command names a platform-generic shell script that sets some environment variables and then sources 
+    % The first argument names a platform-generic shell script that sets some environment variables and then sources 
     % the next field, a platform-specific fragment that echos a "submit job" command for the MPE platform.
     % The third and remaining fields are the command and arguments to be run when the task is executed.
     % But the dance goes on: the first thing executed is a bash script that sets up the matlab environment,
@@ -81,6 +81,7 @@ for j = 1:Njobs
         error('creating command from template failed');
     end
     fprintf(fid,cmdstr);
+    verbose(cmdstr,30);
 end
 fclose(fid);
 
