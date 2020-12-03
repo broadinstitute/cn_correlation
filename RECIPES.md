@@ -1,8 +1,8 @@
-#->> key: # = comment; $ = unix; | = what you should see; >> = matlab
-
 ### clone the broadinstitute cn_correlation github repository
-# My local github repositories are under the directory ~/git
-# Yours may vary...
+Recipe repositories are assumed to be under the directory ~/git. 
+You should adjust the examples to match the location of your own
+repository.
+
 ```
 $ cd ~/git/broadinstitute
 $ git clone https://github.com/broadinstitute/cn_correlation.git
@@ -15,7 +15,7 @@ searches for functions (defined in text files with the .m extension).
 The recipe below assumes you are creating the file for the first
 time: if you already have a startup file you need to edit it and add
 the contents of the repo startup. Note that you should edit the file
-anyway in order to reflect your own local git repo ppath.
+anyway in order to reflect your own local git repo location.
 ```
 $ cat startup.m
 |if ~isdeployed
@@ -25,31 +25,39 @@ $ cat startup.m
 $ mkdir ~/matlab
 $ cp startup.m ~/matlab/
 ```
-### edit the matlab function definition file corrperm_lsf_submission.m
-the string cmd_template defined starting on line 42 will need to be modified
-|cmd_template = ['bsub ',...
-|          '-R "rusage[mem=4]" ',... 
-|          '-mig 5 ',...
-|          '-R "select[cpuf>100]" ',... 
-|          '-Q "EXCLUDE(127)" ',...
-|          '-q hour ',...
-|          '-W 240 ',...
-|          '-P cancerfolk ',...
-|          '-o ',perm_dir,'%s.out.txt -e ',perm_dir,'%s.err.txt ',...
-|          '-r ',wrapscript,' ',executable,' ',ref_dir,' ',perm_dir ' %s %d\n']; 
-# In particular, the '-P cancerfolk' is a Broad-specific option naming
-# the group that is funding the compute that will need to change. The
-# '...'s at the end of each line are to continue the matlab statements
-# to the next line. 
-
-### copy the example directory files to a working directory with large storage quota
-I left my example run from this recipe there for comparison (run with GridEngine instead of LSF)
+### copy the example directory files to a separate working directory (optional)
+Although it is possible to work directly from the example directory, making a copy is
+better because if you run a lot of permutations, the index storage can consume large 
+amounts of disk space.
 ```
 $ ls example/
 $ mkdir /xchip/beroukhimlab/gistic/corrperm/example
 $ cp example/* /xchip/beroukhimlab/gistic/corrperm/example
 $ cd /xchip/beroukhimlab/gistic/corrperm/example
 ```
+
+### customize the multiprocessing environment 'submit' template file
+The submit template file creates the command for a multiprocessing environment to run
+a task that will perform a "chunk" of permutations within the time frame the environment
+allows for the task. A couple examples of submit template files are in the ```cn_correlation```
+directory: lsf.submit is for LSF and has been tested at DFCI ErisOne; and one for GridEngine 
+(UGER) tested at the Broad Institute.
+```
+$ cat ~/git/broadinstitute/cn_correlation/lsf.submit
+| echo bsub -R "rusage[mem=8000]" -q medium -n 1 -o $OUTFILE -e $ERRFILE -r $*
+$ cat ~/git/broadinstitute/cn_correlation/uger.submit
+| echo qsub -N corrperm -b y -o $OUTFILE -e $ERRFILE -wd $WORK_DIR $*
+```
+These files may be edited, or copied and edited to suit your own multiprocessing environment. The following
+environment strings are defined for the template:
+
+- $* is the command to be executed
+- $OUTPUT_DIR path to the output directory for permutations
+- $WORK_DIR path to the input directory for permutations (soon this will be the same as $OUTPUT_DIR)
+- $TAGOUT "output tag" that names the output associated with each specific chunk. For example if the output is named IDX_CELL.CYCLE001.mat the output tag is 'CYCLE001'
+- $OUTFILE file to capture standard output from task
+- $ERRFILE file to capture standard error from task
+
 ### do whatever you need to do on your cluster to run matlab 2014a
 (Broad uses the dotkit 'use .matlab-2014a' command)
 
