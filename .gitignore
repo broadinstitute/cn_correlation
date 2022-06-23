@@ -4,5 +4,9 @@
 *.svn
 # emacs backups
 *~
+
 # files created by cn_correlation
 matlabroot
+
+#Finder droppings
+.DS_Store
