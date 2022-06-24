@@ -2,8 +2,58 @@
 
 ### Permutation Module
 
+#### Permutation Module Inputs
+
+##### Main permutation inputs
+This reflects the current state of things (2020) rather than the final plan.
+
+*H* - disruption profile of input samples (TODO: higher, user-level description)
+> The H struct contains a data matrix 'margs' of per-chromosome disruption per sample. The units are currently number of markers disrupted (problem: no total markers to normalize). The H struct also contains meta-data: 'sdesc' are sample_ids; 'chrname' are chromosome names; 'pcnames' and 'pcx' represent the lineage of each sample encoded as lineage names and corresponding indices of each lineage in 'sdesc' and 'margs'.
+
+*permuter* - annealing/tempering algorithm to use, currently either *ampdel\_tempering\_module* or *ampdel\_lockstep\_module*
+
+*mpe* - multi-processor environment customization file
+>> currently either *lsf.submit* for the Platform LSF environment or *uger.submit* for the Univa GridEngine Research cluster
+
+*ref_dir* - reference directory for input files
+> Files written by permutation module:
+>> *launch_perms.sh* - unix script to submit jobs to multiprocessor environment
+
+>> *matlabroot* - text file containing path to matlab
+
+>> compiled MCMC permuter module, currently either *ampdel\_tempering\_module* or *ampdel\_lockstep\_module*
+
+*perm_dir* - permutation working/output directory
+> Files written as annealing/tempering module inputs:
+>> *perm_opts.mat* - MCMC module-specific options + 'randseed'
+
+>> *H.mat* - cohort disruption profile
+
+>> *rngseed* - seed for pseudo-random number generator
+
+> Files written by compiled MCMC permuter module instances per-chunk:
+>> *idx_cell.\<chunk>.mat* - array of sample reorderings calculated by the chunk
+
+>> *stats.\<chunk>.mat* - MCMC progress statistics
+
+>> *stat_finals.\<chunk>.mat* - final MCMC statistics for each chunk
+
+*Njobs* - number of chunks to schedule with MPE
+
+*Niters* - number of iterations per chunk
+
+*params* - struct of input parameters, documented in next section
+
+##### Permutation input parameters
+
+*randseed* - seed used for pseudo-random number generator
+
+
+
+#### Permutation Module Outputs
+
 ### Analysis Module
-#### Types of Analysis
+#### Types of Analyses
 *pair_stats* - p- and q-value estimators for event pair correlation/anti-correlation
 > Default analysis. Compares co-occurrences in the constrained permutations with the observed co-occurences to estimate p-values.
 
@@ -19,22 +69,24 @@
 *subgroup* - create p-value estimators for each subset in a sample partition
 > Introduced to breakdown the contributions of each individually permuted lineage to the p-value, this is actually more general and can be used with any categorical sample info column.
 
-#### Analysis Inputs
-##### Files
+#### Analysis Module Inputs
+##### Main analysis inputs
 *event_map* - map of which samples (rows) have which events (columns)
 > The first column is presumed to be the sample_id key and its values should match the key in the sample_info file to the The remaining columns 
 
 *event_info* - information about each event
 > Required columns: 'event' matching row naes of event map; 'chr' naming the chromosome the event is on; 'type', 'a' for amplifications, 'd' for deletions. 
 
-*perm_dir* - directory containing permutation module output files
+*perm_dir* - input directory containing permutation module output files
 
 *results_dir* - directory for analysis output files
 
 *sample_info* - per-sample information
 > One column is keyed into the event map sample column. The analysis is performed on 
 
-##### Parameters
+*params* - struct of input parameters, documented in next section
+
+##### Analysis input arameters
 
 *ext* - extension for output files
 
@@ -61,6 +113,6 @@
 *group_details* - enables group output details (default FALSE)
 > If TRUE, then results for each subgroup as detailed as the overall analysis will be output, otherwise the output will be a table of p-values with dimensions event x group.
 
-*do_pair_stats* - set to false to supress event-pair analysis (default TRUE)
+*do_pair_stats* - set to false to suppress event-pair analysis (default TRUE)
 
-#### Analysis Outputs
+#### Analysis Module Outputs
