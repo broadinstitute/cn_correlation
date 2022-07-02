@@ -38,9 +38,14 @@ This reflects the current state of things (2020) rather than the final plan.
 
 >> *stat_finals.\<chunk>.mat* - final MCMC statistics for each chunk
 
+> Files written by MPE capturing text output by each chunk:
+>> *cycle\<chunk>.out.txt* - standard output
+
+>> *cycle\<chunk>.err.txt* - standard error
+
 *Njobs* - number of chunks to schedule with MPE
 
-*Niters* - number of iterations per chunk
+*Niters* - number of simulations per chunk
 
 *params* - struct of input parameters, documented in next section
 
@@ -51,6 +56,31 @@ This reflects the current state of things (2020) rather than the final plan.
 
 
 #### Permutation Module Outputs
+
+##### annealing/tempering module file inputs
+
+*perm_opts.mat* - MCMC module-specific options + 'randseed'
+
+*H.mat* - cohort disruption profile that serves as an ensemble to permute. This file is also an input to the analyses.
+
+##### annealing/tempering module file outputs (per chunk)
+
+*idx_cell.\<chunk>.mat* - arrays of sample reorderings
+
+*stats.\<chunk>.mat* - MCMC progress statistics
+
+*stat_finals.\<chunk>.mat* - final MCMC statistics for each chunk
+
+##### MPE outputs (per chunk)
+
+*cycle\<chunk>.out.txt* - standard output
+
+*cycle\<chunk>.err.txt* - standard error
+
+##### misc
+*rngseed* - seed for pseudo-random number generator (reproducibility)
+
+
 
 ### Analysis Module
 #### Types of Analyses
@@ -72,7 +102,7 @@ This reflects the current state of things (2020) rather than the final plan.
 #### Analysis Module Inputs
 ##### Main analysis inputs
 *event_map* - map of which samples (rows) have which events (columns)
-> The first column is presumed to be the sample_id key and its values should match the key in the sample_info file to the The remaining columns 
+> The first column is presumed to be the *sample\_id* key and its values should match the key in the *sample\_info* file to the The remaining columns 
 
 *event_info* - information about each event
 > Required columns: 'event' matching row naes of event map; 'chr' naming the chromosome the event is on; 'type', 'a' for amplifications, 'd' for deletions. 
