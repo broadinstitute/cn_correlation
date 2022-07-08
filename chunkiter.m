@@ -1,4 +1,4 @@
-function [table,mlt] = chunkiter(E, perm_dir, options)
+function [table,mlt,lpa] = chunkiter(E, perm_dir, options)
     % sketch of function that iterates over file chunks
     % E is an event map structure (Estruct)
     % perm_dir path to directory of permutations
@@ -19,6 +19,7 @@ function [table,mlt] = chunkiter(E, perm_dir, options)
         options = struct;
     end
     options = impose_default_value(options,'perm_file_mask','idx_cell*');
+    options = impose_default_value(options,'tail',{'anti','corr'});
     options = impose_default_value(options,'split_eq',false);   % set to split observed===permuted between tail and body 
     options = impose_default_value(options,'pcount',1);         % pseudo count (1 or 0) 
     options = impose_default_value(options,'analyze_lineages',false);%
@@ -134,7 +135,7 @@ function [table,mlt] = chunkiter(E, perm_dir, options)
     table = results(stat,pairs_idx,options);
     [table.event1] = deal(e1{:});
     [table.event2] = deal(e2{:});
-    table = orderfields(table,{'event1','event2','p_corr','p_anti'})
+    table = orderfields(table,{'event1','event2','p_corr','p_anti'});
 
     % melted lineage table
     ltabs = cell(Nlineages,1);
@@ -146,6 +147,25 @@ function [table,mlt] = chunkiter(E, perm_dir, options)
         ltabs{l} = tab;
     end
     mlt = vertcat(ltabs{:});
-    mlt = orderfields(mlt,{'lineage','event1','event2','p_corr','p_anti'})
-        
+    mlt = orderfields(mlt,{'lineage','event1','event2','p_corr','p_anti'});
+
+    % lineage p-value array
+    tail = options.tail;
+    if ~iscell(tail)
+        tail = {tail};
+    end
+    ttabs = cell(size(tail));
+    for t = 1:length(tail)
+        pcolname = ['p_',tail{t}];
+        p = {table.(pcolname)}';
+        ltab = struct('event1',e1,'event2',e2,'tail',tail{t},'overall',p);
+        for l = 1:Nlineages
+            tab = results(lstats{l},pairs_idx,options);
+            col = linnames{l};
+            [ltab.(col)] = deal(tab.(pcolname));
+        end
+        ttabs{t} = ltab;
+    end
+    lpa = vertcat(ttabs{:});
+
 end % function

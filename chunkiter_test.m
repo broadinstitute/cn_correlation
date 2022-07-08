@@ -7,6 +7,6 @@ perm_dir = '/xchip/beroukhimlab/gistic/corrperm/workspace/ll_work/ll_permout';
 emap_file = '/xchip/beroukhimlab/gistic/corrperm/example/ll_work/ngll.emap.mat';
 options = struct('analyze_lineages',true);
 
-load(emap_file);
-E.dat = full(E.dat);
-[ot,mlt] = chunkiter(E,perm_dir,options);
+E = load_emap(emap_file);
+
+[ot,mlt,lpa] = chunkiter(E,perm_dir,options);

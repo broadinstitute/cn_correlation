@@ -21,7 +21,7 @@ function submit_perms(H,permuter,mpe,ref_dir,perm_dir,Njobs,Niters,perm_opts)
 
 % need input directory
 if ~exist(ref_dir,'dir')
-    error('input directory doen''t exist!')
+    error('input directory doesn''t exist!')
 end
 
 % make output directory if need be

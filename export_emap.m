@@ -32,7 +32,7 @@ function export_emap(E,evif_fname,ecall_fname)
     % write event call file 
     fid = fopen(ecall_fname,'w');
     % construct 'lineage' output class column
-    lincol = repmat({''},size(E.sample.id));
+    lincol = repmat({''},size(E.sdesc));
     for i = 1:length(E.pcx)
         lincol(E.pcx{i}) = repmat(cellstr(E.pcname{i}),size(E.pcx{i}));
     end
@@ -40,7 +40,7 @@ function export_emap(E,evif_fname,ecall_fname)
     fprintf(fid,['sample',tb,'lineage',tb,strjoin(E.event.name',tb),'\n']);
     % write body
     for i = 1:size(E.dat,2)
-        fprintf(fid,[E.sample.id{i},tb,lincol{i},tb,strjoin(O12(E.dat(:,i)'+1),tb),'\n']);
+        fprintf(fid,[E.sdesc{i},tb,lincol{i},tb,strjoin(O12(E.dat(:,i)'+1),tb),'\n']);
     end
     fclose(fid);
 end
