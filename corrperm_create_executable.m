@@ -62,7 +62,7 @@ end
 if ~exist(exepath)
     % if it doesn't exist, recompile
     verbose('recompile needed: no executable',20)
-    need_recompile = true;
+    need_compile = true;
 else
     % if the source module is newer that the executable, recompile
     %@!!! NOTE: doesn't check date of other dependent source files)
