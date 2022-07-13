@@ -1,13 +1,20 @@
-function [table,mlt,lpa] = chunkiter(E, perm_dir, options)
+function [tabhold] = chunkiter(E, perm_dir, options)
     % sketch of function that iterates over file chunks
     % E is an event map structure (Estruct)
     % perm_dir path to directory of permutations
     % options are optional arguments
-%
+    % returns a struct of all generated tables
     % get sizes from observed data matrix dimensions
-    [Nevents,Nsamples] = size(E.dat);
-    Nchr = length(unique(E.event.chrn));
 
+    tabhold = struct;
+    [Nevents,Nsamples] = size(E.dat);
+
+    % count number of unique, non-zero chromosomes
+    Nchr = length(unique(E.event.chrn));
+    if any(E.event.chrn==0)
+        Nchr = Nchr - 1;
+    end
+    
     % chromosome => event mapping
     chrns_e = cell(1,Nchr);
     for c = 1:Nchr
@@ -92,6 +99,9 @@ function [table,mlt,lpa] = chunkiter(E, perm_dir, options)
             for c = 1:Nchr
                 emap(chrns_e{c},:) = double(E.dat(chrns_e{c},idx_mat(c,:)));
             end
+            % move features to map w/o permuting
+            featx = find(E.event.chrn==0); %!!! move outside loop
+            emap(featx,:) = double(E.dat(featx,:));
             
             % update statistics with current permutation
             stat = perm(stat,emap);
@@ -105,20 +115,32 @@ function [table,mlt,lpa] = chunkiter(E, perm_dir, options)
     % calculate number of pairs on different chromosomes
     Npairs = 0;
     for i = 1:Nevents
-        Npairs = Npairs + sum(E.event.chrn(i) < E.event.chrn);
+        if E.event.chrn(i) > 0
+            Npairs = Npairs + sum(E.event.chrn(i) < E.event.chrn);
+        end
     end
+    Nfeatures = sum(E.event.chrn==0); % NOTE: included in Nevents
+    
     % create indexed pair of indices
     pairs_idx = zeros(Npairs,2);
+    features_idx = zeros(Nfeatures*(Nevents-Nfeatures),2);
     s = 1;
+    t = 1;
     for i = 1:Nevents-1
         for j = i+1:Nevents
             if E.event.chrn(i) ~= E.event.chrn(j)
-                pairs_idx(s,:) = [i,j];
-                s = s + 1;
+                if E.event.chrn(i) == 0 || E.event.chrn(j) == 0
+                    features_idx(t,:) = [i,j];
+                    t = t + 1;
+                else
+                    pairs_idx(s,:) = [i,j];
+                    s = s + 1;
+                end
             end
         end
     end
 
+    % check for potentially identical permutations
     if length(unique(hash32)) ~= Nperms
         warning('some permutations might be identical');
         verbose('%d of %d hashes unique',10,length(unique(hash32)),Nperms);
@@ -131,41 +153,60 @@ function [table,mlt,lpa] = chunkiter(E, perm_dir, options)
     e2 = E.event.name(pairs_idx(:,2));
     %! paircols = struct('event1',e1,'event2',e2);
 
-    % overall
+    % overall event pair
     table = results(stat,pairs_idx,options);
     [table.event1] = deal(e1{:});
     [table.event2] = deal(e2{:});
     table = orderfields(table,{'event1','event2','p_corr','p_anti'});
 
-    % melted lineage table
-    ltabs = cell(Nlineages,1);
-    for l = 1:Nlineages
-        tab = results(lstats{l},pairs_idx,options);
-        [tab.lineage] = deal(linnames{l});
-        [tab.event1] = deal(e1{:});
-        [tab.event2] = deal(e2{:});
-        ltabs{l} = tab;
+    tabhold.overall_pair = table; % add to results tables 
+    
+    % event vs feature
+    if Nfeatures > 0
+        ftable = results(stat,features_idx,options);
+        f1 = E.event.name(features_idx(:,1));
+        f2 = E.event.name(features_idx(:,2));
+        [ftable.event] = deal(f1{:});
+        [ftable.feature] = deal(f2{:});
+        tabhold.feature_table = ftable; % add to results tables
     end
-    mlt = vertcat(ltabs{:});
-    mlt = orderfields(mlt,{'lineage','event1','event2','p_corr','p_anti'});
+    
+    %% lineage analyses
 
-    % lineage p-value array
-    tail = options.tail;
-    if ~iscell(tail)
-        tail = {tail};
-    end
-    ttabs = cell(size(tail));
-    for t = 1:length(tail)
-        pcolname = ['p_',tail{t}];
-        p = {table.(pcolname)}';
-        ltab = struct('event1',e1,'event2',e2,'tail',tail{t},'overall',p);
+    if options.analyze_lineages
+        % melted lineage table
+        ltabs = cell(Nlineages,1);
         for l = 1:Nlineages
             tab = results(lstats{l},pairs_idx,options);
-            col = linnames{l};
-            [ltab.(col)] = deal(tab.(pcolname));
+            [tab.lineage] = deal(linnames{l});
+            [tab.event1] = deal(e1{:});
+            [tab.event2] = deal(e2{:});
+            ltabs{l} = tab;
         end
-        ttabs{t} = ltab;
+        mlt = vertcat(ltabs{:});
+        mlt = orderfields(mlt,{'lineage','event1','event2','p_corr','p_anti'});
+        tabhold.lineage_melt = mlt; % add to results table
+        
+        % lineage p-value array
+        fieldnames = head2field(linnames);
+        tail = options.tail;
+        if ~iscell(tail)
+            tail = {tail};
+        end
+        ttabs = cell(size(tail));
+        for t = 1:length(tail)
+            pcolname = ['p_',tail{t}];
+            p = {table.(pcolname)}';
+            ltab = struct('event1',e1,'event2',e2,'tail',tail{t},'overall',p);
+            for l = 1:Nlineages
+                tab = results(lstats{l},pairs_idx,options);
+                col = fieldnames{l};
+                [ltab.(col)] = deal(tab.(pcolname));
+            end
+            ttabs{t} = ltab;
+        end
+        lpa = vertcat(ttabs{:});
+        tabhold.lineage_pval_array = lpa; % add to results tables
     end
-    lpa = vertcat(ttabs{:});
 
 end % function
