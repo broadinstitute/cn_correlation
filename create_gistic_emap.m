@@ -26,8 +26,8 @@ function E = create_gistic_emap(D,regs,pcx,Binary_amps,Binary_dels);
     E.event.type = [repmat(1,length(regs{1}),1);repmat(2,length(regs{2}),1)];
 
     % lineage fields for analysis == permutation class fields (for now)
-    E.pcx = pcx;
-    E.pcname = extract_pcname(D,pcx);
+    %! E.pcx = pcx;
+    %! E.pcname = extract_pcname(D,pcx);
     % event call matrix
     E.dat = [Binary_amps;Binary_dels];
  
