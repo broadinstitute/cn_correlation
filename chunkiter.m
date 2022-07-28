@@ -6,7 +6,18 @@ function [tabhold] = chunkiter(E, perm_dir, options)
     % returns a struct of all generated tables
     % get sizes from observed data matrix dimensions
 
-    tabhold = struct;
+    %% process optional arguments
+    if ~exist('options','var')
+        options = struct;
+    end
+    options = impose_default_value(options,'perm_file_mask','idx_cell*');
+    options = impose_default_value(options,'tail',{'anti','corr'});
+    options = impose_default_value(options,'split_eq',false);   % set to split observed===permuted between tail and body 
+    options = impose_default_value(options,'pcount',1);         % pseudo count (1 or 0) 
+    options = impose_default_value(options,'analyze_lineages',false);%
+
+    tabhold = struct; % holds named results
+
     [Nevents,Nsamples] = size(E.dat);
 
     % count number of unique, non-zero chromosomes
@@ -21,24 +32,48 @@ function [tabhold] = chunkiter(E, perm_dir, options)
         chrns_e{c} = find(E.event.chrn == c);
     end
 
-    %% process optional arguments
-    if ~exist('options','var')
-        options = struct;
+    % calculate number of pairs on different chromosomes
+    Npairs = 0;
+    for i = 1:Nevents
+        if E.event.chrn(i) > 0
+            Npairs = Npairs + sum(E.event.chrn(i) < E.event.chrn);
+        end
     end
-    options = impose_default_value(options,'perm_file_mask','idx_cell*');
-    options = impose_default_value(options,'tail',{'anti','corr'});
-    options = impose_default_value(options,'split_eq',false);   % set to split observed===permuted between tail and body 
-    options = impose_default_value(options,'pcount',1);         % pseudo count (1 or 0) 
-    options = impose_default_value(options,'analyze_lineages',false);%
+    Nfeatures = sum(E.event.chrn==0); % NOTE: included in Nevents
+    
+    % create indexed pair of pair indices for ExE
+    pairs_idx = zeros(Npairs,2);
+    s = 1;
+    for i = 1:Nevents-1
+        for j = i+1:Nevents
+            if E.event.chrn(i) ~= E.event.chrn(j)
+                if E.event.chrn(i) ~= 0 && E.event.chrn(j) ~= 0
+                    pairs_idx(s,:) = [i,j];
+                    s = s + 1;
+                end
+            end
+        end
+    end
 
-    %% load disruption structure 'H' from H.mat in permutation directory
+    % create indexed pair of indices for ExF
+    fx = repmat(find(E.event.chrn == 0)',1,Nevents-Nfeatures)';
+    ex = repmat(find(E.event.chrn ~= 0)',Nfeatures,1);
+    features_idx = [ex(:),fx(:)];
+
+    % load information about the permutations into 'perm_opts'
+    popt_path = fullfile(perm_dir,'perm_opts.mat');
+    assert(logical(exist(popt_path,'file')));
+    load(popt_path);
+    assert(logical(exist('perm_opts','var')));
+    
+    input_dir = fullfile(perm_dir,perm_opts.output_subdir);
+    assert(logical(exist(input_dir ,'file')));
+
+    % load disruption structure 'H' from H.mat in permutation directory
     load(fullfile(perm_dir,'H.mat'));
     assert(logical(exist('H','var')));
     assert(all(strcmp({E.sample.id},H.sdesc')));
-
-    % initialize overall statistics
-    stat = chunkstat_ExE(E.dat);
-
+    
     % lineage analysis based on permutation lineages
     Nlineages = 0;
     if options.analyze_lineages
@@ -48,6 +83,9 @@ function [tabhold] = chunkiter(E, perm_dir, options)
     end
 
     %% initialize statistics
+
+    % initialize overall statistics
+    stat = chunkstat_ExE(E.dat);
 
     % initiate per-lineage statistics
     if Nlineages > 0
@@ -59,10 +97,10 @@ function [tabhold] = chunkiter(E, perm_dir, options)
 
     
     %% process permutation directory
-    files = dir(fullfile(perm_dir,options.perm_file_mask));
+    files = dir(fullfile(input_dir,options.perm_file_mask));
     
     Nfiles = length(files);
-    verbose('Reading %d permutation chunks from ''%s''',10,Nfiles,perm_dir);
+    verbose('Reading %d permutation chunks from ''%s''',10,Nfiles,input_dir);
     if ~Nfiles
         error('No permutation data to process');
     end
@@ -72,7 +110,7 @@ function [tabhold] = chunkiter(E, perm_dir, options)
     for k = 1:Nfiles
         verbose('Processing ''%s''',20,files(k).name);
         tic
-        load(fullfile(perm_dir,files(k).name));  % 'idx_cell' cell array, each element Nchr x Nsamples
+        load(fullfile(input_dir,files(k).name));  % 'idx_cell' cell array, each element Nchr x Nsamples
         if ~exist('NExpectedPerms','var')
             npf = length(idx_cell);
             NExpectedPerms = Nfiles * npf;
@@ -112,34 +150,6 @@ function [tabhold] = chunkiter(E, perm_dir, options)
         end % loop over permutations in chunk
     end % loop over chunk files
     
-    % calculate number of pairs on different chromosomes
-    Npairs = 0;
-    for i = 1:Nevents
-        if E.event.chrn(i) > 0
-            Npairs = Npairs + sum(E.event.chrn(i) < E.event.chrn);
-        end
-    end
-    Nfeatures = sum(E.event.chrn==0); % NOTE: included in Nevents
-    
-    % create indexed pair of indices
-    pairs_idx = zeros(Npairs,2);
-    features_idx = zeros(Nfeatures*(Nevents-Nfeatures),2);
-    s = 1;
-    t = 1;
-    for i = 1:Nevents-1
-        for j = i+1:Nevents
-            if E.event.chrn(i) ~= E.event.chrn(j)
-                if E.event.chrn(i) == 0 || E.event.chrn(j) == 0
-                    features_idx(t,:) = [i,j];
-                    t = t + 1;
-                else
-                    pairs_idx(s,:) = [i,j];
-                    s = s + 1;
-                end
-            end
-        end
-    end
-
     % check for potentially identical permutations
     if length(unique(hash32)) ~= Nperms
         warning('some permutations might be identical');

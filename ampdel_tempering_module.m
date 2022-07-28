@@ -1,19 +1,23 @@
-function ampdel_tempering_module(ref_dir,perm_dir,chunk_id,iters,varargin)
+function ampdel_tempering_module(input_dir,output_dir,chunk_id,iters,varargin)
 %AMPDEL_TEMPERING_MODULE - executable wrapper function for ampdel_tempering()
 %
-%   ampdel_tempering_module(REF_DIR,PERM_DIR,CHUNK_ID,ITERS,SEED)
+%   ampdel_tempering_module(INPUT_DIR,OUTPUT_DIR,CHUNK_ID,ITERS,SEED)
 %
-% All inputs are strings for command line usage. REF_DIR is the path to the directory 
-% with input files; PERM_DIR is the path to the directory where permated output files are 
+% All inputs are strings for command line usage. INPUT_DIR is the path to the directory 
+% of input files; OUTPUT_DIR is the path to the directory where permated output files are 
 % written; CHUNK_ID is a file extension to identify the chunk; ITERS is the number of 
 % iterations to do per-chunk. SEED is an optional seed to put the matlab random number 
 % generator in a known state. If omitted or empty, the RNG seed is selected randomly and 
 % saved in 'randseed.mat' in the OUTPUT_DIR.
 
-% load input data from files with hardwired names in perm_dir
+% load input data from files with hardwired names in input_dir
 fprintf('loading input files\n')
-load(fullfile(perm_dir,'H.mat')); % 'H' struct disruption samples
-load(fullfile(perm_dir,'perm_opts.mat')); % 'perm_opts' struct for passing permutation options
+load(fullfile(input_dir,'H.mat')); % 'H' struct describes disruption across samples/chromosomes
+load(fullfile(input_dir,'perm_opts.mat')); % 'perm_opts' struct for passing permutation options
+
+% make sure output directory exists (can't create: race condition)
+%!!!output_dir = fullfile(input_dir,perm_opts.output_subdir);
+%!!!assert(exist(output_dir,'file'));
 
 % convert iteration count argument to number
 if exist('iters','var') && ~isempty(iters)
@@ -28,7 +32,7 @@ else
     end
 end
 
-set_verbose_level(40); %!!! put in opts
+set_verbose_level(perm_opts.verbose_level);
 
 % check for optional random number generator seed argument
 if length(varargin) > 0
@@ -44,9 +48,9 @@ fprintf('RNG seed: %d\n',seed);
 
 % save output to files
 fprintf('saving output files\n');
-save(fullfile(perm_dir,['idx_cell.',chunk_id,'.mat']),'idx_cell');
-save(fullfile(perm_dir,['stat_finals.',chunk_id,'.mat']),'stat_finals');
-save(fullfile(perm_dir,['stats.',chunk_id,'.mat']),'stats');
+save(fullfile(output_dir,['idx_cell.',chunk_id,'.mat']),'idx_cell')
+save(fullfile(output_dir,['stat_finals.',chunk_id,'.mat']),'stat_finals')
+save(fullfile(output_dir,['stats.',chunk_id,'.mat']),'stats')
 fprintf('ampdel tempering module complete for chunk\n');
 
 end % function

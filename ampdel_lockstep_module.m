@@ -15,20 +15,24 @@ fprintf('loading input files\n')
 load(fullfile(perm_dir,'H.mat')); % 'H' struct disruption samples
 load(fullfile(perm_dir,'perm_opts.mat')); % 'perm_opts' struct for passing permutation options
 
+% make sure output directory exists (can't create: race condition)
+output_dir = fullfile(perm_dir,perm_opts.output_subdir);
+assert(exist(output_dir,'file'));
+
 % convert iteration count argument to number
 if exist('iters','var') && ~isempty(iters)
     if ischar(iters) 
         iters = str2double(iters);
     end
 else
-    if isfield(opts.Niters)
-        iters = opts.Niters
+    if isfield(perm_opts.Niters)
+        iters = perm_opts.Niters
     else
         iters = 10;
     end
 end
 
-set_verbose_level(40); %!!! put in opts
+set_verbose_level(perm_opts.verbose_level);
 
 % check for optional random number generator seed argument
 if length(varargin) > 0
@@ -44,9 +48,9 @@ fprintf('RNG seed: %d\n',seed);
 
 % save output to files
 fprintf('saving output files\n')
-save(fullfile(perm_dir,['idx_cell.',chunk_id,'.mat']),'idx_cell')
-save(fullfile(perm_dir,['stat_finals.',chunk_id,'.mat']),'stat_finals')
-save(fullfile(perm_dir,['stats.',chunk_id,'.mat']),'stats')
+save(fullfile(output_dir,['idx_cell.',chunk_id,'.mat']),'idx_cell')
+save(fullfile(output_dir,['stat_finals.',chunk_id,'.mat']),'stat_finals')
+save(fullfile(output_dir,['stats.',chunk_id,'.mat']),'stats')
 fprintf('ampdel lockstep module complete for chunk\n')
 
 end % function
