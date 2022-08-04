@@ -48,7 +48,7 @@ classdef chunkstat_ExE < chunkstat
 
             % calculate p-values
 
-            verbose('calculating overall p-values for co-occurrences',20);
+            %!verbose('calculating overall p-values for co-occurrences',20);
             for s = 1:Npairs
                 i = pairs_idx(s,1);
                 j = pairs_idx(s,2);

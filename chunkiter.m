@@ -95,7 +95,8 @@ function [tabhold] = chunkiter(E, perm_dir, options)
         end
     end
 
-    
+    FI = FileIter2(perm_dir);
+%{
     %% process permutation directory
     files = dir(fullfile(input_dir,options.perm_file_mask));
     
@@ -104,10 +105,17 @@ function [tabhold] = chunkiter(E, perm_dir, options)
     if ~Nfiles
         error('No permutation data to process');
     end
-
+%}
+    
     %% loop over files
+    Nsims = FI.count();
+    hash32 = zeros(1,Nsims);
+
     Nperms = 0;
-    for k = 1:Nfiles
+    tic; %!!! temporary
+    while FI.any_more()
+%{
+%!  for k = 1:Nfiles
         verbose('Processing ''%s''',20,files(k).name);
         tic
         load(fullfile(input_dir,files(k).name));  % 'idx_cell' cell array, each element Nchr x Nsamples
@@ -119,37 +127,45 @@ function [tabhold] = chunkiter(E, perm_dir, options)
 
         % loop over permutations in the chunk
         for i = 1:npf
-            % count permutation
-            Nperms = Nperms + 1;        
-
-            % use permutation indices to rearrange observed events
-            idx_mat = idx_cell{i};
-            % check for old 3D index matrix and convert if necessary
-            if length(size(idx_mat))==3
-                idx_mat = idx_mat(:,:,1);
-            end
-
-            % calculate CRC as test for identical permutations
-            hash32(Nperms) = crc32(uint32(idx_mat));
-
-            % map chromosomes to events one chromosome at a time
-            emap = zeros(Nevents,Nsamples); % allocate storage for expanded event map
-            for c = 1:Nchr
-                emap(chrns_e{c},:) = double(E.dat(chrns_e{c},idx_mat(c,:)));
-            end
-            % move features to map w/o permuting
-            featx = find(E.event.chrn==0); %!!! move outside loop
-            emap(featx,:) = double(E.dat(featx,:));
+%}
+        
+        % count permutation
+        Nperms = Nperms + 1;        
             
-            % update statistics with current permutation
-            stat = perm(stat,emap);
-            for l = 1:Nlineages
-                lstats{l} = perm(lstats{l},emap(:,lindices{l}));
-            end
-            
-        end % loop over permutations in chunk
-    end % loop over chunk files
-    
+        % use permutation indices to rearrange observed events
+        idx_mat = FI.next();
+        %!idx_mat = idx_cell{i};
+        % check for old 3D index matrix and convert if necessary
+        if length(size(idx_mat))==3
+            idx_mat = idx_mat(:,:,1);
+        end
+
+        % calculate CRC as test for identical permutations
+        hash32(Nperms) = crc32(uint32(idx_mat));
+
+        % map chromosomes to events one chromosome at a time
+        emap = zeros(Nevents,Nsamples); % allocate storage for expanded event map
+        for c = 1:Nchr
+            emap(chrns_e{c},:) = double(E.dat(chrns_e{c},idx_mat(c,:)));
+        end
+        % move features to map w/o permuting
+        featx = find(E.event.chrn==0); %!!! move outside loop
+        emap(featx,:) = double(E.dat(featx,:));
+        
+        % update statistics with current permutation
+        stat = perm(stat,emap);
+        for l = 1:Nlineages
+            lstats{l} = perm(lstats{l},emap(:,lindices{l}));
+        end
+
+        %!!! temporary performance test
+        if 0 == mod(Nperms,200)
+            toc
+            tic;
+        end
+
+    end % while loop over permutations
+        
     % check for potentially identical permutations
     if length(unique(hash32)) ~= Nperms
         warning('some permutations might be identical');

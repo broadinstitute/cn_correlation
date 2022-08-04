@@ -22,13 +22,14 @@ classdef FileIter
             I.Nchunks = file_opts.Nchunks;
             I.Niters = file_opts.Niters;
             I.perm_path_template = fullfile(perm_dir,file_opts.chunk_template);
-            I.reset();
+            I = reset(I);
         end
         
-        %% restart iteration at beginning
-        function reset(I)
+        %% restart iterations at beginning
+        % no status refresh from file system
+        function I = reset(I)
             I.chunk = 0;
-            I.iter = Niters + 1; %!!! hacky
+            I.iter = I.Niters + 1; %!!! hacky
             I.idx_cell = [];
         end
 
