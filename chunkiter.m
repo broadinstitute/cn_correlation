@@ -21,33 +21,33 @@ function [tabhold] = chunkiter(E, perm_dir, options)
     [Nevents,Nsamples] = size(E.dat);
 
     % count number of unique, non-zero chromosomes
-    Nchr = length(unique(E.event.chrn));
-    if any(E.event.chrn==0)
+    Nchr = length(unique([E.event.chrn]));
+    if any([E.event.chrn]==0)
         Nchr = Nchr - 1;
     end
     
     % chromosome => event mapping
     chrns_e = cell(1,Nchr);
     for c = 1:Nchr
-        chrns_e{c} = find(E.event.chrn == c);
+        chrns_e{c} = find([E.event.chrn] == c);
     end
 
     % calculate number of pairs on different chromosomes
     Npairs = 0;
     for i = 1:Nevents
-        if E.event.chrn(i) > 0
-            Npairs = Npairs + sum(E.event.chrn(i) < E.event.chrn);
+        if E.event(i).chrn > 0
+            Npairs = Npairs + sum(E.event(i).chrn < [E.event.chrn]);
         end
     end
-    Nfeatures = sum(E.event.chrn==0); % NOTE: included in Nevents
+    Nfeatures = sum([E.event.chrn]==0); % NOTE: included in Nevents
     
     % create indexed pair of pair indices for ExE
     pairs_idx = zeros(Npairs,2);
     s = 1;
     for i = 1:Nevents-1
         for j = i+1:Nevents
-            if E.event.chrn(i) ~= E.event.chrn(j)
-                if E.event.chrn(i) ~= 0 && E.event.chrn(j) ~= 0
+            if E.event(i).chrn ~= E.event(j).chrn
+                if E.event(i).chrn ~= 0 && E.event(j).chrn ~= 0
                     pairs_idx(s,:) = [i,j];
                     s = s + 1;
                 end
@@ -56,8 +56,8 @@ function [tabhold] = chunkiter(E, perm_dir, options)
     end
 
     % create indexed pair of indices for ExF
-    fx = repmat(find(E.event.chrn == 0)',1,Nevents-Nfeatures)';
-    ex = repmat(find(E.event.chrn ~= 0)',Nfeatures,1);
+    fx = repmat(find([E.event.chrn] == 0)',1,Nevents-Nfeatures)';
+    ex = repmat(find([E.event.chrn] ~= 0)',Nfeatures,1);
     features_idx = [ex(:),fx(:)];
 
     % load information about the permutations into 'perm_opts'
@@ -149,7 +149,7 @@ function [tabhold] = chunkiter(E, perm_dir, options)
             emap(chrns_e{c},:) = double(E.dat(chrns_e{c},idx_mat(c,:)));
         end
         % move features to map w/o permuting
-        featx = find(E.event.chrn==0); %!!! move outside loop
+        featx = find([E.event.chrn]==0); %!!! move outside loop
         emap(featx,:) = double(E.dat(featx,:));
         
         % update statistics with current permutation
@@ -175,8 +175,8 @@ function [tabhold] = chunkiter(E, perm_dir, options)
     %% results
     
     % pair name columns
-    e1 = E.event.name(pairs_idx(:,1));
-    e2 = E.event.name(pairs_idx(:,2));
+    e1 = {E.event(pairs_idx(:,1)).name};
+    e2 = {E.event(pairs_idx(:,2)).name};
     %! paircols = struct('event1',e1,'event2',e2);
 
     % overall event pair
@@ -190,8 +190,8 @@ function [tabhold] = chunkiter(E, perm_dir, options)
     % event vs feature
     if Nfeatures > 0
         ftable = results(stat,features_idx,options);
-        f1 = E.event.name(features_idx(:,1));
-        f2 = E.event.name(features_idx(:,2));
+        f1 = {E.event(features_idx(:,1)).name};
+        f2 = {E.event(features_idx(:,2)).name};
         [ftable.event] = deal(f1{:});
         [ftable.feature] = deal(f2{:});
         tabhold.feature_table = ftable; % add to results tables
@@ -222,7 +222,7 @@ function [tabhold] = chunkiter(E, perm_dir, options)
         ttabs = cell(size(tail));
         for t = 1:length(tail)
             pcolname = ['p_',tail{t}];
-            p = {table.(pcolname)}';
+            p = {table.(pcolname)};
             ltab = struct('event1',e1,'event2',e2,'tail',tail{t},'overall',p);
             for l = 1:Nlineages
                 tab = results(lstats{l},pairs_idx,options);

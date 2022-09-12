@@ -13,7 +13,7 @@ function export_emap(E,evif_fname,ecall_fname)
     O12 = {'0','1','2'}; % map logical matrix to char
 
     % write event info file
-    other_fields = setdiff(fieldnames(E.event),{'name','type','chrn'});
+    other_fields = setdiff(fieldnames(E.event),{'name','chrn','type'});
     other_cols = {};
     for f = 1:length(other_fields)
         event_data = E.event.(other_fields{f});
@@ -26,8 +26,8 @@ function export_emap(E,evif_fname,ecall_fname)
     end
 
     write_filtered_tabcols(evif_fname,[],{'event',E.event.name},...
-                           {'type',fad(E.event.type+1)},...
-                           {'chrn',E.event.chrn},other_cols{:});
+                           {'chrn',E.event.chrn},other_cols{:},...
+                           {'type',fad(E.event.type+1)});
 
     % write event call file 
     fid = fopen(ecall_fname,'w');
